@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { ApiService } from "@/services/api"
 import type { ConversationDto, Conversation, ConversationListItemDto, ConversationSearchParams } from "@/types/crm"
+import { signalRService } from "@/services/signalr"
 
 export function useConversationList() {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -88,6 +89,14 @@ export function useConversationList() {
     [convertListItemToFrontend],
   )
 
+  const handleNewConversation = useCallback((conversationDto: ConversationListItemDto) => {
+    console.log("Nova conversa recebida via SignalR:", conversationDto);
+    const newConversation = convertListItemToFrontend(conversationDto);
+    
+    // Adiciona a nova conversa no topo da lista
+    setConversations((prev) => [newConversation, ...prev.filter(c => c.id !== newConversation.id)]);
+  }, [convertListItemToFrontend]);
+
   // Iniciar nova conversa
   const startConversation = useCallback(
     async (contatoId: string, texto: string) => {
@@ -158,8 +167,35 @@ export function useConversationList() {
 
   // Carregar conversas na inicialização
   useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
+    // Ação 1: Carrega os dados da API apenas uma vez.
+    loadConversations(); 
+
+    // Ação 2: Configura a conexão em tempo real.
+    const setupRealtimeUpdates = async () => {
+      try {
+        await signalRService.connect();
+        await signalRService.joinUnassignedQueue();
+        
+        // Registra o listener para novas conversas
+        signalRService.onNewConversation(handleNewConversation);
+
+      } catch (error) {
+        console.error("Falha ao configurar a conexão em tempo real:", error);
+        setError("Não foi possível conectar para receber atualizações.");
+      }
+    };
+    
+    setupRealtimeUpdates();
+
+    // Ação 3: Função de limpeza que será chamada na desmontagem.
+    return () => {
+      console.log("Limpando listeners e conexão SignalR...");
+      signalRService.removeAllListeners();
+      signalRService.leaveUnassignedQueue();
+      signalRService.disconnect();
+    };
+    // A LISTA DE DEPENDÊNCIAS CORRIGIDA:
+  }, [loadConversations, handleNewConversation]); 
 
   return {
     conversations,

@@ -1,7 +1,7 @@
 "use client"
 
 import * as signalR from "@microsoft/signalr"
-import type { ConversationDetailsDto, MessageDto } from "@/types/crm"
+import type { ConversationDetailsDto, ConversationListItemDto, MessageDto } from "@/types/crm"
 
 export class SignalRService {
   private connection: signalR.HubConnection | null = null
@@ -14,7 +14,7 @@ export class SignalRService {
 
     const hubUrl = process.env.NEXT_PUBLIC_API_URL
       ? `${process.env.NEXT_PUBLIC_API_URL}/conversationHub`
-      : "http://localhost:5000/conversationHub"
+      : "http://localhost:5233/conversationHub"
 
     this.connection = new signalR.HubConnectionBuilder().withUrl(hubUrl).withAutomaticReconnect().build()
 
@@ -115,18 +115,15 @@ export class SignalRService {
       this.connection.off("ReceiveMessage")
     }
   }
-  onReceiveNewConversation(callback: (conversation: ConversationDetailsDto) => void): void {
-    if (!this.connection) return
-    // "ReceiveNewConversation" é o nome do evento que definimos no backend
-    this.connection.on("ReceiveNewConversation", callback)
+  onNewConversation(handler: (conversationDto: ConversationListItemDto) => void) {
+    this.connection?.on("ReceiveNewConversation", handler); // <--- NOME CORRETO
   }
 
-  // NOVO: Método para parar de ouvir o evento de nova conversa
-  offReceiveNewConversation(): void {
-    if (this.connection) {
-      this.connection.off("ReceiveNewConversation")
-    }
-  }
+  removeAllListeners() {
+    this.connection?.off("ReceiveNewConversation"); // <--- NOME CORRETO
+    this.connection?.off("UpdateConversation");
+}
+ 
   getConnectionState(): signalR.HubConnectionState | null {
     return this.connection?.state || null
   }
