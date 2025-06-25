@@ -19,7 +19,7 @@ export default function CRMPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("conversations")
   const [showNewConversation, setShowNewConversation] = useState(false)
   const [conversationFilter, setConversationFilter] = useState<
-    "all" | "AguardandoNaFila" | "EmAndamento" | "Resolvida"
+    "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   >("all")
 
   const {
@@ -52,7 +52,7 @@ export default function CRMPage() {
     selectConversation(conversationId)
   }
 
-  const handleFilterChange = (filter: "all" | "AguardandoNaFila" | "EmAndamento" | "Resolvida") => {
+  const handleFilterChange = (filter: "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida") => {
     setConversationFilter(filter)
     if (filter === "all") {
       filterByStatus()
@@ -65,7 +65,7 @@ export default function CRMPage() {
   const conversationCounts = {
     all: conversations.length,
     AguardandoNaFila: conversations.filter((c) => c.status === "AguardandoNaFila").length,
-    EmAndamento: conversations.filter((c) => c.status === "EmAndamento").length,
+    EmAtendimento: conversations.filter((c) => c.status === "EmAtendimento").length,
     Resolvida: conversations.filter((c) => c.status === "Resolvida").length,
   }
 

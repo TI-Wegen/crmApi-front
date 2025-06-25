@@ -17,7 +17,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return <Clock className="h-3 w-3 text-yellow-600" />
-      case "EmAndamento":
+      case "EmAtendimento":
         return <User className="h-3 w-3 text-blue-600" />
       case "Resolvida":
         return <CheckCircle className="h-3 w-3 text-green-600" />
@@ -30,7 +30,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return "bg-yellow-100 text-yellow-800"
-      case "EmAndamento":
+      case "EmAtendimento":
         return "bg-blue-100 text-blue-800"
       case "Resolvida":
         return "bg-green-100 text-green-800"
@@ -43,7 +43,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return "Na Fila"
-      case "EmAndamento":
+      case "EmAtendimento":
         return "Em Andamento"
       case "Resolvida":
         return "Resolvida"

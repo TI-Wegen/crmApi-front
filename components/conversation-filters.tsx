@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge"
 
 interface ConversationFiltersProps {
   activeFilter: string
-  onFilterChange: (filter: "all" | "AguardandoNaFila" | "EmAndamento" | "Resolvida") => void
+  onFilterChange: (filter: "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida") => void
   conversationCounts?: {
     all: number
     AguardandoNaFila: number
-    EmAndamento: number
+    EmAtendimento: number
     Resolvida: number
   }
 }
@@ -35,10 +35,10 @@ export default function ConversationFilters({
       color: "bg-yellow-100 text-yellow-800",
     },
     {
-      key: "EmAndamento" as const,
+      key: "EmAtendimento" as const,
       label: "Em Andamento",
       icon: Users,
-      count: conversationCounts?.EmAndamento || 0,
+      count: conversationCounts?.EmAtendimento || 0,
       color: "bg-blue-100 text-blue-800",
     },
     {

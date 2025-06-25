@@ -151,7 +151,7 @@ export function useConversationList() {
 
   // Filtrar por status
   const filterByStatus = useCallback(
-    (status?: "AguardandoNaFila" | "EmAndamento" | "Resolvida") => {
+    (status?: "AguardandoNaFila" | "EmAtendimento" | "Resolvida") => {
       loadConversations({ status })
     },
     [loadConversations],

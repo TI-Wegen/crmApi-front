@@ -6,7 +6,7 @@ export interface ContatoDto {
   telefone: string
   tags?: string[]
   ativo: boolean
-  criadoEm: string
+  timestamp: string
   atualizadoEm?: string
 }
 
@@ -15,7 +15,7 @@ export interface AgenteDto {
   nome: string
   email: string
   ativo: boolean
-  criadoEm: string
+  timestamp: string
   atualizadoEm?: string
 }
 
@@ -25,14 +25,14 @@ export interface MessageDto {
   anexoUrl?: string
   remetenteTipo: "Cliente" | "Agente"
   agenteId?: string
-  criadoEm: string
+  timestamp: string
 }
 
 export interface ConversationDto {
   id: string
   contatoId: string
   agenteId?: string
-  status: "AguardandoNaFila" | "EmAndamento" | "Resolvida"
+  status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   criadaEm: string
   atualizadaEm?: string
   ultimaMensagem?: string
@@ -45,7 +45,7 @@ export interface ConversationListItemDto {
   contatoNome: string
   contatoTelefone: string
   agenteNome?: string | null
-  status: "AguardandoNaFila" | "EmAndamento" | "Resolvida"
+  status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   ultimaMensagemTimestamp: string
   ultimaMensagemPreview: string
 }
@@ -64,7 +64,7 @@ export interface Conversation {
   timestamp: string
   unread: number
   avatar: string
-  status: "AguardandoNaFila" | "EmAndamento" | "Resolvida"
+  status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   agentName?: string
 }
 
@@ -74,14 +74,14 @@ export interface Message {
   timestamp: string
   isFromClient: boolean
   date: string
-  anexoUrl?: string
+  anexo?: string
 }
 
 // Parâmetros para busca de conversas
 export interface ConversationSearchParams {
   pageNumber?: number
   pageSize?: number
-  status?: "AguardandoNaFila" | "EmAndamento" | "Resolvida"
+  status?: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   agenteId?: string
   setorId?: string
 }
