@@ -1,43 +1,117 @@
 "use client"
 
 import * as signalR from "@microsoft/signalr"
-import type { ConversationDetailsDto, ConversationListItemDto, MessageDto } from "@/types/crm"
+import type { MessageDto } from "@/types/crm"
+import { AuthService } from "./auth"
 
 export class SignalRService {
   private connection: signalR.HubConnection | null = null
   private currentConversationId: string | null = null
+  private reconnectAttempts = 0
+  private maxReconnectAttempts = 5
 
   async connect(): Promise<void> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       return
     }
 
+    const token = AuthService.getToken()
+    if (!token) {
+      console.warn("Token não encontrado, não é possível conectar ao SignalR")
+      return
+    }
+
     const hubUrl = process.env.NEXT_PUBLIC_API_URL
       ? `${process.env.NEXT_PUBLIC_API_URL}/conversationHub`
-      : "http://localhost:5233/conversationHub"
+      : "http://localhost:5000/conversationHub"
 
-    this.connection = new signalR.HubConnectionBuilder().withUrl(hubUrl).withAutomaticReconnect().build()
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => token,
+        transport: signalR.HttpTransportType.WebSockets,
+        skipNegotiation: true,
+      })
+      .withAutomaticReconnect({
+        nextRetryDelayInMilliseconds: (retryContext) => {
+          if (retryContext.previousRetryCount < 3) {
+            return 1000 * Math.pow(2, retryContext.previousRetryCount) // 1s, 2s, 4s
+          }
+          return 10000 // 10s para tentativas subsequentes
+        },
+      })
+      .configureLogging(signalR.LogLevel.Information)
+      .build()
+
+    // Configurar eventos de conexão
+    this.connection.onreconnecting(() => {
+      console.log("SignalR reconectando...")
+    })
+
+    this.connection.onreconnected(() => {
+      console.log("SignalR reconectado com sucesso")
+      this.reconnectAttempts = 0
+      // Reentrar no grupo da conversa atual se existir
+      if (this.currentConversationId) {
+        this.joinConversationGroup(this.currentConversationId)
+      }
+    })
+
+    this.connection.onclose((error) => {
+      console.log("Conexão SignalR fechada:", error)
+      this.reconnectAttempts++
+
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        setTimeout(() => {
+          console.log(`Tentativa de reconexão ${this.reconnectAttempts}/${this.maxReconnectAttempts}`)
+          this.connect()
+        }, 5000)
+      } else {
+        console.error("Máximo de tentativas de reconexão atingido")
+      }
+    })
 
     try {
       await this.connection.start()
       console.log("SignalR conectado com sucesso")
+      this.reconnectAttempts = 0
     } catch (error) {
       console.error("Erro ao conectar SignalR:", error)
+
+      // Se o erro for de autenticação, não tentar reconectar
+      if (error instanceof Error && error.message.includes("401")) {
+        console.error("Erro de autenticação no SignalR - token inválido")
+        AuthService.removeToken()
+        window.location.reload()
+        return
+      }
+
       throw error
     }
   }
 
   async disconnect(): Promise<void> {
     if (this.connection) {
-      await this.connection.stop()
-      this.connection = null
-      this.currentConversationId = null
+      try {
+        await this.connection.stop()
+        console.log("SignalR desconectado")
+      } catch (error) {
+        console.error("Erro ao desconectar SignalR:", error)
+      } finally {
+        this.connection = null
+        this.currentConversationId = null
+        this.reconnectAttempts = 0
+      }
     }
   }
 
   async joinConversationGroup(conversationId: string): Promise<void> {
     if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      throw new Error("SignalR não está conectado")
+      console.warn("SignalR não está conectado, tentando conectar...")
+      await this.connect()
+    }
+
+    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+      throw new Error("Não foi possível estabelecer conexão SignalR")
     }
 
     // Sair do grupo anterior se existir
@@ -73,41 +147,14 @@ export class SignalRService {
       console.error("Erro ao sair do grupo da conversa:", error)
     }
   }
-  async joinUnassignedQueue(): Promise<void> {
-    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      // É melhor conectar primeiro antes de chamar este método
-      throw new Error("SignalR não está conectado");
-    }
-    try {
-      await this.connection.invoke("JoinUnassignedQueue");
-      console.log("Inscrito com sucesso na fila de conversas não atribuídas.");
-    } catch (error) {
-      console.error("Erro ao entrar na fila geral:", error);
-      throw error; // Propaga o erro para ser tratado no hook
-    }
-  }
-
-  async leaveUnassignedQueue(): Promise<void> {
-    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      // Se já estiver desconectado, não há o que fazer.
-      console.warn("Tentou sair da fila, mas o SignalR não está conectado.");
-      return;
-    }
-    try {
-      await this.connection.invoke("LeaveUnassignedQueue");
-      console.log("Inscrição na fila de não atribuídos removida.");
-    } catch (error) {
-      console.error("Erro ao sair da fila geral:", error);
-    }
-  }
 
   onReceiveMessage(callback: (message: MessageDto) => void): void {
-    if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
-      console.warn("SignalR não está conectado. Listener não registrado.");
-      return;
+    if (!this.connection) {
+      console.warn("SignalR não está conectado para configurar listener")
+      return
     }
 
-    this.connection.on("ReceiveMessage", callback);
+    this.connection.on("ReceiveMessage", callback)
   }
 
   offReceiveMessage(): void {
@@ -115,17 +162,13 @@ export class SignalRService {
       this.connection.off("ReceiveMessage")
     }
   }
-  onNewConversation(handler: (conversationDto: ConversationListItemDto) => void) {
-    this.connection?.on("ReceiveNewConversation", handler); // <--- NOME CORRETO
-  }
 
-  removeAllListeners() {
-    this.connection?.off("ReceiveNewConversation"); // <--- NOME CORRETO
-    this.connection?.off("UpdateConversation");
-}
- 
   getConnectionState(): signalR.HubConnectionState | null {
     return this.connection?.state || null
+  }
+
+  isConnected(): boolean {
+    return this.connection?.state === signalR.HubConnectionState.Connected
   }
 }
 

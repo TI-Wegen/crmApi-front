@@ -74,7 +74,7 @@ export interface Message {
   timestamp: string
   isFromClient: boolean
   date: string
-  anexo?: string
+  anexoUrl?: string
 }
 
 // Parâmetros para busca de conversas

@@ -1,20 +1,26 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { Providers } from "./providers" // 👈 Importe o componente de Providers
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: "CRM WhatsApp",
+  description: "Sistema de CRM integrado com WhatsApp",
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="pt-BR">
+      <body className={inter.className}>
+        <Providers>{children}</Providers> {/* 👈 Use o wrapper aqui */}
+      </body>
     </html>
   )
 }

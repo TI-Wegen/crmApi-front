@@ -1,182 +1,215 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { ApiService } from "@/services/api";
-import { signalRService } from "@/services/signalr";
-import type {
-  ConversationDetailsDto,
-  MessageDto,
-  Conversation,
-  Message,
-} from "@/types/crm";
+import { useState, useEffect, useCallback } from "react"
+import { ApiService } from "@/services/api"
+import { signalRService } from "@/services/signalr"
+import { useAuth } from "@/contexts/auth-context"
+import type { ConversationDetailsDto, MessageDto, Conversation, Message } from "@/types/crm"
 
 export function useConversations() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<
-    string | null
-  >(null);
-  const [conversationDetails, setConversationDetails] =
-    useState<ConversationDetailsDto | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, token } = useAuth()
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [conversationDetails, setConversationDetails] = useState<ConversationDetailsDto | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [signalRConnected, setSignalRConnected] = useState(false)
 
   // Converter DTO para formato do frontend
-  const convertMessagesToFrontend = useCallback(
-    (dtoMessages: MessageDto[]): Message[] => {
-      return dtoMessages.map((msg) => ({
-        id: msg.id,
-        content: msg.texto,
-        timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isFromClient: msg.remetenteTipo === "Cliente",
-        date: new Date(msg.timestamp).toISOString().split("T")[0],
-        anexoUrl: msg.anexoUrl,
-      }));
-    },
-    []
-  );
+  const convertToFrontendFormat = useCallback((dto: ConversationDetailsDto): Conversation => {
+    return {
+      id: dto.id,
+      clientName: dto.contato.nome,
+      lastMessage: dto.ultimaMensagem || "Sem mensagens",
+      timestamp: dto.ultimaMensagemEm
+        ? new Date(dto.ultimaMensagemEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        : "",
+      unread: 0,
+      avatar: `/placeholder.svg?height=40&width=40`,
+      status: dto.status,
+    }
+  }, [])
+
+  const convertMessagesToFrontend = useCallback((dtoMessages: MessageDto[]): Message[] => {
+    return dtoMessages.map((msg) => ({
+      id: msg.id,
+      content: msg.texto,
+      timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      isFromClient: msg.remetenteTipo === "Cliente",
+      date: new Date(msg.timestamp).toISOString().split("T")[0],
+      anexoUrl: msg.anexoUrl,
+    }))
+  }, [])
+
+  // Conectar ao SignalR quando autenticado
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      const connectSignalR = async () => {
+        try {
+          await signalRService.connect()
+          setSignalRConnected(true)
+          console.log("SignalR conectado com sucesso")
+        } catch (error) {
+          console.error("Erro ao conectar SignalR:", error)
+          setSignalRConnected(false)
+          // Não mostrar erro para o usuário, SignalR é opcional
+        }
+      }
+
+      connectSignalR()
+    } else {
+      // Desconectar SignalR quando não autenticado
+      signalRService.disconnect()
+      setSignalRConnected(false)
+    }
+
+    return () => {
+      if (!isAuthenticated) {
+        signalRService.disconnect()
+      }
+    }
+  }, [isAuthenticated, token])
 
   // Carregar conversa específica
   const loadConversation = useCallback(
     async (conversationId: string) => {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       try {
-        const details = (await ApiService.buscarConversa(
-          conversationId
-        )) as ConversationDetailsDto;
-        setConversationDetails(details);
-        setMessages(convertMessagesToFrontend(details.mensagens));
+        const details = (await ApiService.buscarConversa(conversationId)) as ConversationDetailsDto
+        setConversationDetails(details)
+        setMessages(convertMessagesToFrontend(details.mensagens))
 
-        // Conectar ao SignalR e entrar no grupo da conversa
-        await signalRService.connect();
-        await signalRService.joinConversationGroup(conversationId);
+        // Tentar entrar no grupo da conversa no SignalR (se conectado)
+        if (signalRConnected) {
+          try {
+            await signalRService.joinConversationGroup(conversationId)
+          } catch (signalRError) {
+            console.warn("Erro ao entrar no grupo SignalR:", signalRError)
+            // Não bloquear o carregamento da conversa por erro do SignalR
+          }
+        }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao carregar conversa"
-        );
-        console.error("Erro ao carregar conversa:", err);
+        setError(err instanceof Error ? err.message : "Erro ao carregar conversa")
+        console.error("Erro ao carregar conversa:", err)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     },
-    [convertMessagesToFrontend]
-  );
+    [convertMessagesToFrontend, signalRConnected],
+  )
 
   // Enviar mensagem
   const sendMessage = useCallback(
     async (content: string, file?: File) => {
-
-      if (!selectedConversation) return;
+      if (!selectedConversation) return
 
       try {
-        const formData = new FormData();
-        formData.append("texto", content);
-        formData.append("remetenteTipo", "Agente");
-        const currentAgentId = "23902ec5-a4f5-4a0d-9f02-60d266142124";
-        // TODO: Adicionar ID do agente logado
-        formData.append('agenteId', currentAgentId)
+        const formData = new FormData()
+        formData.append("Texto", content)
+        formData.append("RemetenteTipo", "Agente")
+
+        // TODO: Adicionar ID do agente logado quando disponível
+        // formData.append('AgenteId', currentAgentId)
 
         if (file) {
-          formData.append("anexo", file);
+          formData.append("Anexo", file)
         }
 
-      
+        const newMessage = (await ApiService.adicionarMensagem(selectedConversation, formData)) as MessageDto
 
-        const newMessage = (await ApiService.adicionarMensagem(
-          selectedConversation,
-          formData
-        )) as MessageDto;
-
-        // A mensagem será adicionada via SignalR, mas podemos adicionar localmente para feedback imediato
+        // Adicionar mensagem localmente para feedback imediato
         const frontendMessage: Message = {
           id: newMessage.id,
           content: newMessage.texto,
-          timestamp: new Date(newMessage.timestamp).toLocaleTimeString(
-            "pt-BR",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
+          timestamp: new Date(newMessage.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
           isFromClient: false,
           date: new Date(newMessage.timestamp).toISOString().split("T")[0],
-          anexo: newMessage.anexoUrl,
-        };
+          anexoUrl: newMessage.anexoUrl,
+        }
 
-        setMessages((prev) => [...prev, frontendMessage]);
+        setMessages((prev) => {
+          // Evitar duplicatas
+          if (prev.some((msg) => msg.id === frontendMessage.id)) {
+            return prev
+          }
+          return [...prev, frontendMessage]
+        })
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao enviar mensagem"
-        );
-        console.error("Erro ao enviar mensagem:", err);
+        setError(err instanceof Error ? err.message : "Erro ao enviar mensagem")
+        console.error("Erro ao enviar mensagem:", err)
       }
     },
-    [selectedConversation]
-  );
+    [selectedConversation],
+  )
 
   // Configurar listener do SignalR para novas mensagens
   useEffect(() => {
+    if (!signalRConnected) return
+
     const handleNewMessage = (messageDto: MessageDto) => {
-      console.log("Nova mensagem recebida:", messageDto);
+      console.log("Nova mensagem recebida via SignalR:", messageDto)
 
       const frontendMessage: Message = {
         id: messageDto.id,
         content: messageDto.texto,
-        timestamp: new Date(messageDto.timestamp).toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        timestamp: new Date(messageDto.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
         isFromClient: messageDto.remetenteTipo === "Cliente",
         date: new Date(messageDto.timestamp).toISOString().split("T")[0],
-        anexo: messageDto.anexoUrl,
-      };
+        anexoUrl: messageDto.anexoUrl,
+      }
 
       setMessages((prev) => {
         // Evitar duplicatas
         if (prev.some((msg) => msg.id === frontendMessage.id)) {
-          return prev;
+          return prev
         }
-        return [...prev, frontendMessage];
-      });
-    };
+        return [...prev, frontendMessage]
+      })
+    }
 
-    signalRService.onReceiveMessage(handleNewMessage);
+    signalRService.onReceiveMessage(handleNewMessage)
 
     return () => {
-      signalRService.offReceiveMessage();
-    };
-  }, []);
+      signalRService.offReceiveMessage()
+    }
+  }, [signalRConnected])
 
   // Selecionar conversa
   const selectConversation = useCallback(
     async (conversationId: string) => {
-      if (selectedConversation === conversationId) return;
+      if (selectedConversation === conversationId) return
 
-      // Sair do grupo anterior
-      if (selectedConversation) {
-        await signalRService.leaveConversationGroup(selectedConversation);
+      // Sair do grupo anterior no SignalR
+      if (selectedConversation && signalRConnected) {
+        try {
+          await signalRService.leaveConversationGroup(selectedConversation)
+        } catch (error) {
+          console.warn("Erro ao sair do grupo SignalR:", error)
+        }
       }
 
-      setSelectedConversation(conversationId);
-      await loadConversation(conversationId);
+      setSelectedConversation(conversationId)
+      await loadConversation(conversationId)
     },
-    [selectedConversation, loadConversation]
-  );
+    [selectedConversation, loadConversation, signalRConnected],
+  )
 
   // Buscar conversas (mock - implementar quando tiver endpoint)
   const searchConversations = useCallback((searchTerm: string) => {
-    // TODO: Implementar busca real quando tiver endpoint de listagem de conversas
-    console.log("Buscar conversas:", searchTerm);
-  }, []);
+    console.log("Buscar conversas:", searchTerm)
+  }, [])
 
   // Cleanup ao desmontar
   useEffect(() => {
     return () => {
-      signalRService.disconnect();
-    };
-  }, []);
+      if (selectedConversation && signalRConnected) {
+        signalRService.leaveConversationGroup(selectedConversation)
+      }
+    }
+  }, [selectedConversation, signalRConnected])
 
   return {
     conversations,
@@ -185,17 +218,15 @@ export function useConversations() {
     messages,
     loading,
     error,
+    signalRConnected,
     selectConversation,
     sendMessage,
     searchConversations,
     // Ações adicionais da API
     resolveConversation: (id: string) => ApiService.resolverConversa(id),
-    assignAgent: (conversationId: string, agentId: string) =>
-      ApiService.atribuirAgente(conversationId, agentId),
-    transferConversation: (
-      conversationId: string,
-      data: { novoAgenteId?: string; novoSetorId?: string }
-    ) => ApiService.transferirConversa(conversationId, data),
+    assignAgent: (conversationId: string, agentId: string) => ApiService.atribuirAgente(conversationId, agentId),
+    transferConversation: (conversationId: string, data: { novoAgenteId?: string; novoSetorId?: string }) =>
+      ApiService.transferirConversa(conversationId, data),
     reopenConversation: (id: string) => ApiService.reabrirConversa(id),
-  };
+  }
 }

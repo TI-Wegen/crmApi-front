@@ -11,11 +11,12 @@ import { useConversations } from "@/hooks/use-conversations"
 import { useConversationList } from "@/hooks/use-conversation-list"
 // Adicionar import do filtro
 import ConversationFilters from "@/components/conversation-filters"
-
+import ProtectedRoute from "@/components/protected-route"
+import UserHeader from "@/components/user-header"
 type ActiveTab = "conversations" | "contacts"
 
 // Atualizar o componente para usar conversas reais
-export default function CRMPage() {
+function CRMContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("conversations")
   const [showNewConversation, setShowNewConversation] = useState(false)
   const [conversationFilter, setConversationFilter] = useState<
@@ -26,6 +27,7 @@ export default function CRMPage() {
     selectedConversation,
     conversationDetails,
     messages,
+    signalRConnected,
     loading: chatLoading,
     error: chatError,
     selectConversation,
@@ -92,6 +94,8 @@ export default function CRMPage() {
 
   return (
     <div className="flex h-screen bg-gray-100">
+    <UserHeader signalRConnected={signalRConnected} />
+      <div className="flex flex-1 overflow-hidden">
       {/* Coluna Esquerda - Navegação e Listas */}
       <div className="w-1/3 min-w-[320px] bg-white border-r border-gray-200 flex flex-col">
         {/* Navegação por abas */}
@@ -188,5 +192,21 @@ export default function CRMPage() {
         />
       )}
     </div>
+    </div>
   )
 }
+
+export default function CRMPage() {
+  return (
+    <ProtectedRoute>
+      <CRMContent />
+    </ProtectedRoute>
+  )
+}
+
+// export default function CRMPage() {
+//   return (
+//          <CRMContent />
+
+//   )
+// }
