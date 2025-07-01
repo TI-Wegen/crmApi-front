@@ -174,14 +174,15 @@ export function useConversationList() {
     [isAuthenticated]
   );
 const signalRConnected = useConversationSignalREvents({
+  groups: ["UnassignedQueue",],
   onNewConversation: (convoDto) => {
+    console.log("📥 Nova conversa", convoDto);
     const newConversation = convertSummaryToConversation(convoDto);
     addOrUpdateConversation(newConversation);
   },
-
   onNewMessage: (message) => {
     if (!message.conversationId) return;
-
+    console.log("💬 Nova mensagem", message);
     updateConversationInList(message.conversationId, (prevConv) => ({
       lastMessage: message.texto,
       timestamp: formatMessageTimestamp(message.timestamp),
@@ -191,18 +192,17 @@ const signalRConnected = useConversationSignalREvents({
           : prevConv?.unread || 0,
     }));
   },
-
   onStatusChange: updateConversationStatus,
-
-  onError: (msg) => {
-    setError(msg);
-  },
+  onError: setError,
 });
+
 
 
 useEffect(() => {
   if (isAuthenticated) {
     loadConversations();
+
+    
   }
 }, [isAuthenticated, loadConversations]);
   return {
