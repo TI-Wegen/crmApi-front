@@ -173,6 +173,9 @@ export function useConversationList() {
     },
     [isAuthenticated]
   );
+
+  
+
 const signalRConnected = useConversationSignalREvents({
   groups: ["UnassignedQueue",],
   onNewConversation: (convoDto) => {

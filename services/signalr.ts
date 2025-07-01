@@ -194,7 +194,9 @@ export class SignalRService {
     await this.connection?.invoke("JoinConversationGroup", group);
     console.log(`📡 Entrou no grupo: ${group}`);
   }
-
+leaveGroup(group: string) {
+  return this.connection?.invoke("LeaveGroup", group);
+}
   getConnectionState(): signalR.HubConnectionState | null {
     return this.connection?.state || null;
   }

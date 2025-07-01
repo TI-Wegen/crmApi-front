@@ -202,21 +202,21 @@ function CRMContent() {
   )
 }
 
-// export default function CRMPage() {
-//   return (
-//     <ProtectedRoute>
-//       <CRMContent />
-//     </ProtectedRoute>
-//   )
-// }
-
 export default function CRMPage() {
   return (
-    <div>
-   <TestConversationHook />
-               {/* <TesteSignalR /> */}
-
-    </div>
-
+    <ProtectedRoute>
+      <CRMContent />
+    </ProtectedRoute>
   )
 }
+
+// export default function CRMPage() {
+//   return (
+//     <div>
+//    <TestConversationHook />
+//                {/* <TesteSignalR /> */}
+
+//     </div>
+
+//   )
+// }
