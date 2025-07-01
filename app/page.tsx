@@ -13,6 +13,9 @@ import { useConversationList } from "@/hooks/use-conversation-list"
 import ConversationFilters from "@/components/conversation-filters"
 import ProtectedRoute from "@/components/protected-route"
 import UserHeader from "@/components/user-header"
+import { useSignalRConnectionStatus } from "@/hooks/useSignalRConnectionStatus"
+import { TesteSignalR } from "@/components/tests/testeSignalR"
+import { TestConversationHook } from "@/components/tests/TestConversations"
 type ActiveTab = "conversations" | "contacts"
 
 // Atualizar o componente para usar conversas reais
@@ -23,11 +26,13 @@ function CRMContent() {
     "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   >("all")
 
+  const isSignalRConnected = useSignalRConnectionStatus();
+
+
   const {
     selectedConversation,
     conversationDetails,
     messages,
-    signalRConnected,
     loading: chatLoading,
     error: chatError,
     selectConversation,
@@ -37,6 +42,7 @@ function CRMContent() {
 
   const {
     conversations,
+    signalRConnected,
     loading: conversationsLoading,
     error: conversationsError,
     searchConversations,
@@ -196,17 +202,21 @@ function CRMContent() {
   )
 }
 
-export default function CRMPage() {
-  return (
-    <ProtectedRoute>
-      <CRMContent />
-    </ProtectedRoute>
-  )
-}
-
 // export default function CRMPage() {
 //   return (
-//          <CRMContent />
-
+//     <ProtectedRoute>
+//       <CRMContent />
+//     </ProtectedRoute>
 //   )
 // }
+
+export default function CRMPage() {
+  return (
+    <div>
+   <TestConversationHook />
+               {/* <TesteSignalR /> */}
+
+    </div>
+
+  )
+}

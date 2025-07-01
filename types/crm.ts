@@ -48,6 +48,7 @@ export interface ConversationListItemDto {
   status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   ultimaMensagemTimestamp: string
   ultimaMensagemPreview: string
+  mensagensNaoLidas?: number // Adiciona o campo de mensagens não lidas
 }
 
 export interface ConversationDetailsDto extends ConversationDto {
@@ -91,11 +92,10 @@ export interface ConversationSummaryDto {
   contatoNome: string;
   contatoTelefone: string;
   agenteNome?: string;
-  status: string;
+  status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   ultimaMensagemTimestamp: string; // Vem como string ISO
   ultimaMensagemPreview: string;
 }
-
-export interface ConversationsDto{
-  
+export interface MessageWithConversationIdDto extends MessageDto {
+  conversationId: string;
 }

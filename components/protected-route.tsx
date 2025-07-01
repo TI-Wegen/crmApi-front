@@ -11,8 +11,6 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth()
-  console.log("isAuthenticated:", isAuthenticated)
-  console.log("isLoading:", isLoading)
   
   if (isLoading) {
     return (
