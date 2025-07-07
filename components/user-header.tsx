@@ -18,7 +18,7 @@ interface UserHeaderProps {
 
 export default function UserHeader({ signalRConnected = false }: UserHeaderProps) {
   const { user, logout } = useAuth()
-
+  console.log("UserHeader", user)
   if (!user) return null
 
   const handleLogout = () => {
@@ -35,6 +35,7 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
             <span className="text-white text-sm font-bold">CRM</span>
           </div>
           <h1 className="text-xl font-semibold text-gray-800">Sistema CRM</h1>
+          <h3>{user.setorNome}</h3>
           <SignalRStatus isConnected={signalRConnected} />
         </div>
 

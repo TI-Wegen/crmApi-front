@@ -19,7 +19,6 @@ export class AuthService {
       const errorData = await response.json().catch(() => ({}))
       throw new Error(errorData.message || "Credenciais inválidas")
     }
-
     return response.json()
   }
 
@@ -47,11 +46,12 @@ export class AuthService {
     try {
       const payload = token.split(".")[1]
       const decoded = JSON.parse(atob(payload))
-
       return {
         id: decoded.sub,
         email: decoded.email,
         name: decoded.name,
+        setorId: decoded.setorId,
+        setorNome: decoded.setorNome,
       }
     } catch (error) {
       console.error("Erro ao decodificar token:", error)

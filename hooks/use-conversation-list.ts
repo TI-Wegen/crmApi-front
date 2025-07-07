@@ -13,15 +13,7 @@ import type {
 } from "@/types/crm";
 import { useConversationSignalREvents } from "./useConversationSignalREvents";
 
-// ============================================================================
-// ✨ ARQUITETURA LIMPA: Funções Puras Extraídas
-// Estas funções não dependem do estado do hook e podem viver fora dele.
-// Isso as torna reutilizáveis, testáveis e impede que sejam recriadas a cada render.
-// ============================================================================
 
-/**
- * Converte um DTO de item de lista de conversa para o formato do frontend.
- */
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
   return {
     id: dto.id,
@@ -55,7 +47,7 @@ function convertSummaryToConversation(dto: ConversationSummaryDto): Conversation
 // ============================================================================
 
 export function useConversationList() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,11 +140,9 @@ export function useConversationList() {
         const dtos = (await ApiService.listarConversas({
           pageNumber: 1,
           pageSize: 50,
+          setorId: user?.setorId,
           ...params,
         })) as ConversationListItemDto[];
-
-        // ✅ PERFORMANCE: Ordena os dados brutos ANTES de converter.
-        // É mais confiável e performático ordenar por data do que por strings como "Hoje" ou "Ontem".
         dtos.sort(
           (a, b) =>
             new Date(b.ultimaMensagemTimestamp).getTime() -

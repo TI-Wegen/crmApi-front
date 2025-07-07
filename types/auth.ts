@@ -11,6 +11,8 @@ export interface User {
   id: string
   email: string
   name: string
+  setorId?: string
+  setorNome?: string
 }
 
 export interface AuthState {

@@ -101,6 +101,10 @@ export class ApiService {
     return this.request(`/api/agents${query ? `?${query}` : ""}`)
   }
 
+  static async buscarAgente(id: string) {
+    return this.request(`/api/agents/${id}`)
+  }
+
   // Conversas
   static async listarConversas(params?: ConversationSearchParams) {
     const searchParams = new URLSearchParams()

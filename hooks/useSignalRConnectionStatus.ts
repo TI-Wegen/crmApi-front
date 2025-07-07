@@ -7,6 +7,7 @@ import * as signalR from "@microsoft/signalr";
 export function useSignalRConnectionStatus() {
   const [isConnected, setIsConnected] = useState(signalRService.isConnected());
 
+  console.log("useSignalRConnectionStatus", isConnected);
   useEffect(() => {
     const checkConnection = () => {
       setIsConnected(signalRService.isConnected());

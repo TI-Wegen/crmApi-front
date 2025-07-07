@@ -49,6 +49,8 @@ function CRMContent() {
     filterByStatus,
   } = useConversationList()
 
+
+
   const handleStartConversation = (conversationId: string) => {
     setShowNewConversation(false)
     setActiveTab("conversations")
@@ -100,7 +102,7 @@ function CRMContent() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-    <UserHeader signalRConnected={signalRConnected} />
+    <UserHeader signalRConnected={isSignalRConnected} />
       <div className="flex flex-1 overflow-hidden">
       {/* Coluna Esquerda - Navegação e Listas */}
       <div className="w-1/3 min-w-[320px] bg-white border-r border-gray-200 flex flex-col">
@@ -209,14 +211,3 @@ export default function CRMPage() {
     </ProtectedRoute>
   )
 }
-
-// export default function CRMPage() {
-//   return (
-//     <div>
-//    <TestConversationHook />
-//                {/* <TesteSignalR /> */}
-
-//     </div>
-
-//   )
-// }
