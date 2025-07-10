@@ -169,13 +169,11 @@ export function useConversationList() {
 const signalRConnected = useConversationSignalREvents({
   groups: ["UnassignedQueue",],
   onNewConversation: (convoDto) => {
-    console.log("📥 Nova conversa", convoDto);
     const newConversation = convertSummaryToConversation(convoDto);
     addOrUpdateConversation(newConversation);
   },
   onNewMessage: (message) => {
     if (!message.conversationId) return;
-    console.log("💬 Nova mensagem", message);
     updateConversationInList(message.conversationId, (prevConv) => ({
       lastMessage: message.texto,
       timestamp: formatMessageTimestamp(message.timestamp),
@@ -188,6 +186,28 @@ const signalRConnected = useConversationSignalREvents({
   onStatusChange: updateConversationStatus,
   onError: setError,
 });
+
+// filterByStatus 
+const filterByStatus = useCallback(
+    (status: Conversation["status"]) => {
+      loadConversations({ status }, false);
+    },
+    [loadConversations]
+  );
+
+// searchConversations
+const searchConversations = useCallback(
+    (termoBusca: string) => {
+ loadConversations({ searchTerm: termoBusca }, false);
+    },
+    [loadConversations]
+  );
+
+  // --------------------------------------------------------------------------
+  // Efeitos Colaterais
+  // --------------------------------------------------------------------------
+
+  // Carrega as conversas quando o usuário está autenticado
 
 
 
@@ -205,6 +225,8 @@ useEffect(() => {
     pagination,
     loadConversations,
     markAsRead,
+    filterByStatus,
+    searchConversations,
     signalRConnected
   };
 }

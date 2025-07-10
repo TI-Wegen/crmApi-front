@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { Phone, Video, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Conversation, Message } from "@/types/crm"
@@ -18,6 +19,16 @@ interface ChatAreaProps {
 
 // Atualizar a função para receber o parâmetro loading
 export default function ChatArea({ conversation, messages, onSendMessage, loading }: ChatAreaProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, conversation])
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -109,6 +120,7 @@ export default function ChatArea({ conversation, messages, onSendMessage, loadin
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input de mensagem */}

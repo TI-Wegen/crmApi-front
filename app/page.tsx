@@ -101,9 +101,10 @@ function CRMContent() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100">
     <UserHeader signalRConnected={isSignalRConnected} />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex h-full bg-gray-100">
+       <div className="flex flex-1 overflow-hidden">
       {/* Coluna Esquerda - Navegação e Listas */}
       <div className="w-1/3 min-w-[320px] bg-white border-r border-gray-200 flex flex-col">
         {/* Navegação por abas */}
@@ -200,6 +201,7 @@ function CRMContent() {
         />
       )}
     </div>
+   </div>
     </div>
   )
 }
