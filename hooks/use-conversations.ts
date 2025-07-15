@@ -38,6 +38,7 @@ export function useConversations() {
         avatar: `/placeholder.svg?height=40&width=40`,
         status: dto.status,
         agentName: dto.agenteNome || undefined,
+        atentoId: dto.AtentoId || "", 
       };
     },
     []
@@ -312,7 +313,6 @@ export function useConversations() {
       conversationId: string,
       data: { novoAgenteId?: string; novoSetorId?: string }
     ) => ApiService.transferirConversa(conversationId, data),
-    reopenConversation: (id: string) => ApiService.reabrirConversa(id),
     convertToFrontendFormat,
     convertMessagesToFrontend,
   };

@@ -1,11 +1,29 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { Phone, Video, MoreVertical } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Phone, Video, MoreVertical, LogOut, ArrowRightLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { Conversation, Message } from "@/types/crm"
+import type { Conversation, Message, SetorDto } from "@/types/crm"
 import MessageBubble from "./message-bubble"
 import MessageInput from "./message-input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Adicionar suporte a loading e anexos
 
@@ -15,11 +33,25 @@ interface ChatAreaProps {
   messages: Message[]
   onSendMessage: (content: string, file?: File) => void
   loading?: boolean
+  onEndConversation: (atendimentoId: string) => Promise<void>
+  onTransferConversation: (conversationId: string, setorId: string) => Promise<void>
+  setores: SetorDto[]
 }
 
 // Atualizar a função para receber o parâmetro loading
-export default function ChatArea({ conversation, messages, onSendMessage, loading }: ChatAreaProps) {
+export default function ChatArea({
+  conversation,
+  messages,
+  onSendMessage,
+  loading,
+  onEndConversation,
+  onTransferConversation,
+  setores,
+}: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
+  const [selectedSetor, setSelectedSetor] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
@@ -71,6 +103,22 @@ export default function ChatArea({ conversation, messages, onSendMessage, loadin
     }
   }
 
+  const handleEnd = async () => {
+    if (!conversation) return
+    setIsSubmitting(true)
+    await onEndConversation(conversation.atendimentoId)
+    setIsSubmitting(false)
+  }
+
+  const handleTransfer = async () => {
+    if (!conversation || !selectedSetor) return
+    setIsSubmitting(true)
+    await onTransferConversation(conversation.id, selectedSetor)
+    setIsSubmitting(false)
+    setIsTransferModalOpen(false)
+    setSelectedSetor("")
+  }
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header do chat */}
@@ -94,9 +142,24 @@ export default function ChatArea({ conversation, messages, onSendMessage, loadin
             <Button variant="ghost" size="sm">
               <Video className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isSubmitting}>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setIsTransferModalOpen(true)}>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  <span>Transferir Atendimento</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleEnd} className="text-red-500 focus:text-red-500 focus:bg-red-50">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Encerrar Atendimento</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -133,6 +196,43 @@ export default function ChatArea({ conversation, messages, onSendMessage, loadin
         </div>
       )}
       <MessageInput onSendMessage={onSendMessage} />
+
+      {/* Modal de Transferência */}
+      <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Transferir Atendimento</DialogTitle>
+            <DialogDescription>
+              Selecione o setor para o qual deseja transferir esta conversa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="grid gap-4">
+              <Label htmlFor="setor">Setor de Destino</Label>
+              <Select value={selectedSetor} onValueChange={setSelectedSetor}>
+                <SelectTrigger id="setor">
+                  <SelectValue placeholder="Selecione um setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {setores.map((setor) => (
+                    <SelectItem key={setor.id} value={setor.id}>
+                      {setor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleTransfer} disabled={!selectedSetor || isSubmitting}>
+              {isSubmitting ? "Transferindo..." : "Transferir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

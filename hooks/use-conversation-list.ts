@@ -26,6 +26,7 @@ function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
     avatar: `/placeholder.svg?height=40&width=40`,
     status: dto.status,
     agentName: dto.agenteNome || undefined,
+    atendimentoId: dto.atendimentoId || "", // Novo campo para o ID do atendimento
   };
 }
 

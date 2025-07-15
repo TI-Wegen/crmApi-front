@@ -14,7 +14,6 @@ export function useContacts() {
     total: 0,
   })
 
-  // Carregar contatos
   const loadContacts = useCallback(
     async (params?: {
       pageNumber?: number
@@ -32,7 +31,7 @@ export function useContacts() {
           pageSize: number
         }
 
-        setContacts(response.data || (response as any)) // Adaptação caso a API retorne array direto
+        setContacts(response.data || (response as any))
         setPagination({
           pageNumber: response.pageNumber || params?.pageNumber || 1,
           pageSize: response.pageSize || params?.pageSize || 20,

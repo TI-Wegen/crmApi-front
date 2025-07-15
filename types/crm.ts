@@ -2,12 +2,15 @@
 
 export interface ContatoDto {
   id: string
+  atendimentoId: string
   nome: string
   telefone: string
   tags?: string[]
   ativo: boolean
   timestamp: string
   atualizadoEm?: string
+  setorId?: string
+  botSetId?: string
 }
 
 export interface AgenteDto {
@@ -42,6 +45,7 @@ export interface ConversationDto {
 // Novo tipo para a resposta da listagem de conversas
 export interface ConversationListItemDto {
   id: string
+  atendimentoId: string
   contatoNome: string
   contatoTelefone: string
   agenteNome?: string | null
@@ -55,11 +59,13 @@ export interface ConversationDetailsDto extends ConversationDto {
   contato: ContatoDto
   agente?: AgenteDto
   mensagens: MessageDto[]
+  atendimentoId ?: string // Adiciona o campo de atendimentoId
 }
 
 // Tipos para o frontend (mantendo compatibilidade)
 export interface Conversation {
   id: string
+  atendimentoId: string
   clientName: string
   lastMessage: string
   timestamp: string
@@ -89,6 +95,7 @@ export interface ConversationSearchParams {
 
 export interface ConversationSummaryDto {
   id: string;
+  atentoId: string;
   contatoNome: string;
   contatoTelefone: string;
   agenteNome?: string;
@@ -98,4 +105,9 @@ export interface ConversationSummaryDto {
 }
 export interface MessageWithConversationIdDto extends MessageDto {
   conversationId: string;
+}
+
+export interface SetorDto {
+  id: string;
+  nome: string;
 }

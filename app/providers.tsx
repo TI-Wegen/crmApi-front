@@ -1,5 +1,4 @@
-"use client" // Essencial: marca este como um componente de cliente
-
+"use client" 
 import type React from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 // No futuro, você pode adicionar outros providers aqui:

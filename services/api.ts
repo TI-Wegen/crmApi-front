@@ -163,8 +163,8 @@ export class ApiService {
     })
   }
 
-  static async resolverConversa(conversaId: string) {
-    return this.request(`/api/conversations/${conversaId}/resolver`, {
+  static async resolverConversa(atendimentoID: string) {
+    return this.request(`/api/conversations/${atendimentoID}/resolver`, {
       method: "PATCH",
     })
   }
@@ -176,9 +176,7 @@ export class ApiService {
     })
   }
 
-  static async reabrirConversa(conversaId: string) {
-    return this.request(`/api/conversations/${conversaId}/reabrir`, {
-      method: "PATCH",
-    })
+  static async listarSetores() {
+    return this.request(`/api/Agents/setores`)
   }
 }

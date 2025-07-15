@@ -1,8 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MessageCircle, Users, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ApiService } from "@/services/api"
+import { toast, Toaster } from "sonner"
+import type { Setor } from "@/types/crm"
 import ConversationList from "@/components/conversation-list"
 import ChatArea from "@/components/chat-area"
 import ContactsManager from "@/components/contacts-manager"
@@ -16,6 +19,7 @@ import UserHeader from "@/components/user-header"
 import { useSignalRConnectionStatus } from "@/hooks/useSignalRConnectionStatus"
 import { TesteSignalR } from "@/components/tests/testeSignalR"
 import { TestConversationHook } from "@/components/tests/TestConversations"
+import { useAgents } from "@/hooks/use-agents"
 type ActiveTab = "conversations" | "contacts"
 
 // Atualizar o componente para usar conversas reais
@@ -25,7 +29,6 @@ function CRMContent() {
   const [conversationFilter, setConversationFilter] = useState<
     "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida"
   >("all")
-
   const isSignalRConnected = useSignalRConnectionStatus();
 
 
@@ -36,6 +39,8 @@ function CRMContent() {
     loading: chatLoading,
     error: chatError,
     selectConversation,
+    resolveConversation,
+    transferConversation,
     sendMessage,
   } = useConversations()
 
@@ -48,6 +53,11 @@ function CRMContent() {
     searchConversations,
     filterByStatus,
   } = useConversationList()
+
+  // Carregar setores ao iniciar
+  const {
+    setores
+  } = useAgents()
 
 
 
@@ -68,6 +78,32 @@ function CRMContent() {
       filterByStatus()
     } else {
       filterByStatus(filter)
+    }
+  }
+
+  const handleEndConversation = async (atendimentoId: string) => {
+    if (!atendimentoId) return
+    try {
+      await resolveConversation(atendimentoId)
+      toast.success("Atendimento encerrado com sucesso!")
+      filterByStatus(conversationFilter === "all" ? undefined : conversationFilter)
+      selectConversation(null) // Desseleciona a conversa para limpar a área do chat
+    } catch (error) {
+      console.error("Erro ao encerrar atendimento:", error)
+      toast.error("Falha ao encerrar o atendimento.")
+    }
+  }
+
+  const handleTransferConversation = async (atendimentoId: string, setorId: string) => {
+    if (!atendimentoId || !setorId) return
+    try {
+      await ApiService.transferirConversa(atendimentoId, { novoSetorId: setorId })
+      toast.success("Atendimento transferido com sucesso!")
+      filterByStatus(conversationFilter === "all" ? undefined : conversationFilter)
+      selectConversation(null) // Desseleciona a conversa para limpar a área do chat
+    } catch (error) {
+      console.error("Erro ao transferir atendimento:", error)
+      toast.error("Falha ao transferir o atendimento.")
     }
   }
 
@@ -102,6 +138,7 @@ function CRMContent() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
+    <Toaster richColors position="top-right" />
     <UserHeader signalRConnected={isSignalRConnected} />
     <div className="flex h-full bg-gray-100">
        <div className="flex flex-1 overflow-hidden">
@@ -184,12 +221,16 @@ function CRMContent() {
                   unread: 0,
                   avatar: "/placeholder.svg?height=40&width=40",
                   status: conversationDetails.status,
+                  atendimentoId: conversationDetails.atendimentoId,
                 }
               : undefined
           }
           messages={messages}
           onSendMessage={sendMessage}
           loading={chatLoading}
+          onEndConversation={handleEndConversation}
+          onTransferConversation={handleTransferConversation}
+          setores={setores}
         />
       </div>
 
