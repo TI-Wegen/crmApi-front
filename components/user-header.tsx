@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/auth-context"
 import SignalRStatus from "./signalr-status"
+import Link from "next/link"
 
 interface UserHeaderProps {
   signalRConnected?: boolean
@@ -18,7 +19,6 @@ interface UserHeaderProps {
 
 export default function UserHeader({ signalRConnected = false }: UserHeaderProps) {
   const { user, logout } = useAuth()
-  console.log("UserHeader", user)
   if (!user) return null
 
   const handleLogout = () => {
@@ -38,6 +38,40 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
           <h3>{user.setorNome}</h3>
           <SignalRStatus isConnected={signalRConnected} />
         </div>
+
+        <nav>
+          <ul className="flex items-center space-x-4">
+                <li>
+             <Link href="/">
+                <Button variant="ghost" size="sm">
+                  Home
+                </Button>
+              </Link>
+            </li>
+            <li>
+             <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  Dashboard
+                </Button>
+              </Link>
+            </li>
+            <li>
+              <Link href="/conversations">
+                <Button variant="ghost" size="sm">
+                  Conversas
+                </Button>
+              </Link> 
+            </li>
+            <li>
+              <Link href="/contacts">
+                <Button variant="ghost" size="sm">
+                  Contatos
+                </Button>
+              </Link>
+            </li>
+          </ul>
+
+        </nav>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

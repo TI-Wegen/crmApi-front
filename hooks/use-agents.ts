@@ -1,13 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ApiService } from "@/services/api"
 import type { AgenteDto, SetorDto } from "@/types/crm"
+import { AgentService } from "@/services/agent"
 
-/**
- * Hook para gerenciar a lógica de negócios relacionada a agentes.
- * Centraliza o carregamento, paginação e estados de erro/loading.
- */
 export function useAgents() {
   const [agents, setAgents] = useState<AgenteDto[]>([])
   const [setores, setSetores] = useState<SetorDto[]>([])
@@ -31,7 +27,7 @@ export function useAgents() {
 
       try {
         // Assume uma resposta paginada, similar ao 'useContacts'.
-        const response = (await ApiService.listarAgentes(params)) as any
+        const response = (await AgentService.listarAgentes(params)) as any
 
         // Adaptação para o formato de resposta da API (paginado ou array simples)
         if (response.data && typeof response.total !== "undefined") {
@@ -60,7 +56,7 @@ export function useAgents() {
 
   const loadSetores = useCallback(async () => {
     try {
-      const setores = await ApiService.listarSetores()
+      const setores = await AgentService.listarSetores()
         setSetores(setores as SetorDto[])
         return setores as SetorDto[]
     } catch (err) {

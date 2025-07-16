@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ApiService } from "@/services/api";
 import { useAuth } from "@/contexts/auth-context";
 import { formatMessageTimestamp } from "@/utils/date-formatter";
 import type {
@@ -12,6 +11,7 @@ import type {
   MessageDto,
 } from "@/types/crm";
 import { useConversationSignalREvents } from "./useConversationSignalREvents";
+import { ConversationsService } from "@/services/conversations";
 
 
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
@@ -138,7 +138,7 @@ export function useConversationList() {
       setError(null);
 
       try {
-        const dtos = (await ApiService.listarConversas({
+        const dtos = (await ConversationsService.listarConversas({
           pageNumber: 1,
           pageSize: 50,
           setorId: user?.setorId,
@@ -203,14 +203,6 @@ const searchConversations = useCallback(
     },
     [loadConversations]
   );
-
-  // --------------------------------------------------------------------------
-  // Efeitos Colaterais
-  // --------------------------------------------------------------------------
-
-  // Carrega as conversas quando o usuário está autenticado
-
-
 
 useEffect(() => {
   if (isAuthenticated) {

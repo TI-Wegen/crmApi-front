@@ -1,47 +1,25 @@
-import type { ConversationSearchParams } from "@/types/crm"
-import { AuthService } from "./auth"
+import { ApiService } from "./api"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+export class AgentService {
+    static async listarAgentes(params?: {
+    pageNumber?: number
+    pageSize?: number
+    incluirInativos?: boolean
+  }) {
+    const searchParams = new URLSearchParams()
+    if (params?.pageNumber) searchParams.set("pageNumber", params.pageNumber.toString())
+    if (params?.pageSize) searchParams.set("pageSize", params.pageSize.toString())
+    if (params?.incluirInativos) searchParams.set("incluirInativos", params.incluirInativos.toString())
 
-export class ApiService {
-  private static getAuthHeaders(): Record<string, string> {
-    const token = AuthService.getToken()
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    }
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-    return headers
+    const query = searchParams.toString()
+    return ApiService.request(`/api/agents${query ? `?${query}` : ""}`)
   }
 
-  private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`
+  static async buscarAgente(id: string) {
+    return ApiService.request(`/api/agents/${id}`)
+  }
 
-    const response = await fetch(url, {
-      headers: {
-        ...this.getAuthHeaders(),
-        ...options.headers,
-      },
-      ...options,
-    })
-
-    // Se receber 401, fazer logout automático
-    if (response.status === 401) {
-      AuthService.removeToken()
-      window.location.reload()
-      throw new Error("Sessão expirada. Faça login novamente.")
-    }
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
-    }
-
-    // Para respostas 204 No Content
-    if (response.status === 204) {
-      return {} as T
-    }
-
-    return response.json()
+    static async listarSetores() {
+    return ApiService.request(`/api/Agents/setores`)
   }
 }

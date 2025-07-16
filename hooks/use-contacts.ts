@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ApiService } from "@/services/api"
 import type { ContatoDto } from "@/types/crm"
+import { ContactService } from "@/services/contact"
 
 export function useContacts() {
   const [contacts, setContacts] = useState<ContatoDto[]>([])
@@ -24,7 +24,7 @@ export function useContacts() {
       setError(null)
 
       try {
-        const response = (await ApiService.listarContatos(params)) as {
+        const response = (await ContactService.listarContatos(params)) as {
           data: ContatoDto[]
           total: number
           pageNumber: number
@@ -53,7 +53,7 @@ export function useContacts() {
     setError(null)
 
     try {
-      const newContact = (await ApiService.criarContato(dados)) as ContatoDto
+      const newContact = (await ContactService.criarContato(dados)) as ContatoDto
       setContacts((prev) => [newContact, ...prev])
       return newContact
     } catch (err) {
@@ -71,10 +71,10 @@ export function useContacts() {
     setError(null)
 
     try {
-      await ApiService.atualizarContato(id, dados)
+      await ContactService.atualizarContato(id, dados)
 
       // Recarregar a lista ou atualizar localmente
-      const updatedContact = (await ApiService.buscarContato(id)) as ContatoDto
+      const updatedContact = (await ContactService.buscarContato(id)) as ContatoDto
       setContacts((prev) => prev.map((contact) => (contact.id === id ? updatedContact : contact)))
 
       return updatedContact
@@ -93,7 +93,7 @@ export function useContacts() {
     setError(null)
 
     try {
-      await ApiService.inativarContato(id)
+      await ContactService.inativarContato(id)
       setContacts((prev) => prev.filter((contact) => contact.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao inativar contato")

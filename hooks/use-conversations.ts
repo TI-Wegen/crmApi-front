@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ApiService } from "@/services/api";
 import { signalRService } from "@/services/signalr";
 import { useAuth } from "@/contexts/auth-context";
 import type {
@@ -12,6 +11,7 @@ import type {
   ConversationListItemDto,
 } from "@/types/crm";
 import { formatMessageTimestamp } from "@/utils/date-formatter";
+import { ConversationsService } from "@/services/conversations";
 
 export function useConversations() {
   const { isAuthenticated, token } = useAuth();
@@ -38,7 +38,7 @@ export function useConversations() {
         avatar: `/placeholder.svg?height=40&width=40`,
         status: dto.status,
         agentName: dto.agenteNome || undefined,
-        atentoId: dto.AtentoId || "", 
+        atendimentoId: dto.atendimentoId || "", 
       };
     },
     []
@@ -97,7 +97,7 @@ export function useConversations() {
       setError(null);
 
       try {
-        const details = (await ApiService.buscarConversa(
+        const details = (await ConversationsService.buscarConversa(
           conversationId
         )) as ConversationDetailsDto;
         setConversationDetails(details);
@@ -131,7 +131,7 @@ export function useConversations() {
 
     try {
       const conversas =
-        (await ApiService.listarConversas()) as ConversationDetailsDto[];
+        (await ConversationsService.listarConversas()) as ConversationDetailsDto[];
 
       setConversations(conversas.map(convertToFrontendFormat));
 
@@ -171,7 +171,7 @@ export function useConversations() {
           formData.append("Anexo", file);
         }
 
-        const newMessage = (await ApiService.adicionarMensagem(
+        const newMessage = (await ConversationsService.adicionarMensagem(
           selectedConversation,
           formData
         )) as MessageDto;
@@ -306,13 +306,13 @@ export function useConversations() {
     sendMessage,
     searchConversations,
     // Ações adicionais da API
-    resolveConversation: (id: string) => ApiService.resolverConversa(id),
+    resolveConversation: (id: string) => ConversationsService.resolverConversa(id),
     assignAgent: (conversationId: string, agentId: string) =>
-      ApiService.atribuirAgente(conversationId, agentId),
+      ConversationsService.atribuirAgente(conversationId, agentId),
     transferConversation: (
       conversationId: string,
       data: { novoAgenteId?: string; novoSetorId?: string }
-    ) => ApiService.transferirConversa(conversationId, data),
+    ) => ConversationsService.transferirConversa(conversationId, data),
     convertToFrontendFormat,
     convertMessagesToFrontend,
   };
