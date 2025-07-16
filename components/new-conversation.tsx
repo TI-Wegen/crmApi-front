@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useContacts } from "@/hooks/use-contacts"
 import { useConversationList } from "@/hooks/use-conversation-list"
 import type { ContatoDto } from "@/types/crm"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
 interface NewConversationProps {
   onConversationStarted?: (conversationId: string) => void
@@ -21,6 +22,7 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
 
   const [selectedContact, setSelectedContact] = useState<ContatoDto | null>(null)
   const [message, setMessage] = useState("")
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -31,10 +33,10 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
 
   const handleStartConversation = async () => {
     if (!selectedContact || !message.trim()) return
-
+    const messageToSend = selectedTemplate ? `${selectedTemplate}\n${message.trim()}` : message.trim();
     setLoading(true)
     try {
-      const conversation = await startConversation(selectedContact.id, message.trim())
+      const conversation = await startConversation(selectedContact.id, messageToSend)
       if (onConversationStarted) {
         onConversationStarted(conversation.id)
       }
@@ -114,15 +116,28 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
               </div>
 
               {/* Mensagem inicial */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Mensagem inicial</label>
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Digite a primeira mensagem da conversa..."
-                  rows={4}
-                  className="resize-none"
-                />
+              <div className="space-y-2">
+                <Select value={selectedTemplate || undefined} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione um template (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Mocked templates - replace with actual data fetching */}
+                    <SelectItem value="Template 1: Olá [nome], obrigado pelo contato!">Template 1: Olá [nome], obrigado pelo contato!</SelectItem>
+                    <SelectItem value="Template 2: Promoção especial para você!">Template 2: Promoção especial para você!</SelectItem>
+                    <SelectItem value="Template 3: Lembrete de agendamento.">Template 3: Lembrete de agendamento.</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Mensagem (opcional)</label>
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Digite sua mensagem..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
               </div>
             </>
           )}

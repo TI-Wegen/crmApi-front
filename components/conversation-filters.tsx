@@ -22,12 +22,6 @@ export default function ConversationFilters({
 }: ConversationFiltersProps) {
   const filters = [
     {
-      key: "all" as const,
-      label: "Todas",
-      icon: Users,
-      count: conversationCounts?.all || 0,
-    },
-    {
       key: "AguardandoNaFila" as const,
       label: "Na Fila",
       icon: Clock,
@@ -40,14 +34,7 @@ export default function ConversationFilters({
       icon: Users,
       count: conversationCounts?.EmAtendimento || 0,
       color: "bg-blue-100 text-blue-800",
-    },
-    {
-      key: "Resolvida" as const,
-      label: "Resolvidas",
-      icon: CheckCircle,
-      count: conversationCounts?.Resolvida || 0,
-      color: "bg-green-100 text-green-800",
-    },
+    }
   ]
 
   return (
