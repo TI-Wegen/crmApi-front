@@ -82,6 +82,7 @@ export interface Message {
   isFromClient: boolean
   date: string
   anexoUrl?: string
+  visualized?: boolean
 }
 
 // Parâmetros para busca de conversas
@@ -111,3 +112,14 @@ export interface SetorDto {
   id: string;
   nome: string;
 }
+
+export interface TemplateDto {
+  id: string;
+  name: string;
+  body: string;
+  language: string;
+  description?: string;
+}
+
+
+

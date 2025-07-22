@@ -17,7 +17,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return <Clock className="h-3 w-3 text-yellow-600" />
-      case "EmAtendimento":
+      case "EmAndamento":
         return <User className="h-3 w-3 text-blue-600" />
       case "Resolvida":
         return <CheckCircle className="h-3 w-3 text-green-600" />
@@ -30,7 +30,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return "bg-yellow-100 text-yellow-800"
-      case "EmAtendimento":
+      case "EmAndamento":
         return "bg-blue-100 text-blue-800"
       case "Resolvida":
         return "bg-green-100 text-green-800"
@@ -43,7 +43,7 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
     switch (status) {
       case "AguardandoNaFila":
         return "Na Fila"
-      case "EmAtendimento":
+      case "EmAndamento":
         return "Em Andamento"
       case "Resolvida":
         return "Resolvida"
@@ -54,34 +54,45 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
 
   return (
     <div
-      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-        isSelected ? "bg-blue-50 border-r-2 border-r-blue-500" : ""
+      className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 active:bg-gray-100 ${
+        isSelected
+          ? "bg-blue-50 border-r-4 border-r-blue-500 shadow-sm"
+          : "border-b border-gray-100 hover:border-gray-200"
       }`}
       onClick={onClick}
     >
       <div className="flex items-center space-x-3">
-        <img
-          src={conversation.avatar || "/placeholder.svg"}
-          alt={conversation.clientName}
-          className="w-12 h-12 rounded-full object-cover"
-        />
+        <div className="relative flex-shrink-0">
+          <img
+            src={conversation.avatar || "/placeholder.svg"}
+            alt={conversation.clientName}
+            className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+          />
+          {conversation.unread > 0 && (
+            <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-sm">
+              {conversation.unread > 9 ? "9+" : conversation.unread}
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900 truncate">{conversation.clientName}</h3>
-            <span className="text-xs text-gray-500">{conversation.timestamp}</span>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className={`text-sm font-medium truncate ${isSelected ? "text-blue-900" : "text-gray-900"}`}>
+              {conversation.clientName}
+            </h3>
+            <span className={`text-xs flex-shrink-0 ml-2 ${isSelected ? "text-blue-600" : "text-gray-500"}`}>
+              {conversation.timestamp}
+            </span>
           </div>
 
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
-            {conversation.unread > 0 && (
-              <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                {conversation.unread}
-              </span>
-            )}
+          <div className="flex items-center justify-between mb-2">
+            <p className={`text-sm truncate ${isSelected ? "text-blue-700" : "text-gray-600"}`}>
+              {conversation.lastMessage}
+            </p>
           </div>
 
           {/* Status e Agente */}
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className={`text-xs ${getStatusColor(conversation.status)}`}>
                 <span className="flex items-center space-x-1">
@@ -92,7 +103,11 @@ export default function ConversationItem({ conversation, isSelected, onClick }: 
             </div>
 
             {conversation.agentName && (
-              <span className="text-xs text-gray-500 flex items-center">
+              <span
+                className={`text-xs flex items-center flex-shrink-0 ml-2 ${
+                  isSelected ? "text-blue-600" : "text-gray-500"
+                }`}
+              >
                 <User className="h-3 w-3 mr-1" />
                 {conversation.agentName}
               </span>

@@ -10,7 +10,7 @@ export function useContacts() {
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
-    pageSize: 20,
+    pageSize: 100,
     total: 0,
   })
 
@@ -34,7 +34,7 @@ export function useContacts() {
         setContacts(response.data || (response as any))
         setPagination({
           pageNumber: response.pageNumber || params?.pageNumber || 1,
-          pageSize: response.pageSize || params?.pageSize || 20,
+          pageSize: response.pageSize || params?.pageSize || 100,
           total: response.total || (response as any).length || 0,
         })
       } catch (err) {

@@ -206,6 +206,34 @@ export function useConversations() {
     [selectedConversation]
   );
 
+  const startConversation = useCallback(
+    async (contactId: string, templateName: string, bodyParameters: string[]) => {
+      try{
+        const response = await ConversationsService.iniciarConversaPorTemplate({
+          contactId,
+          templateName,
+          bodyParameters,
+        });
+
+        if (response) {
+          
+       
+          return response;
+        } else {
+          throw new Error("Erro ao iniciar conversa com template");
+        }
+
+
+      }
+      catch (err) {
+        console.error("Erro ao iniciar conversa com template:", err);
+        throw err;
+      }
+    },
+    [signalRConnected]
+  );
+        //
+
   // Configurar listener do SignalR para novas mensagens
   useEffect(() => {
     if (!signalRConnected) return;
@@ -305,6 +333,7 @@ export function useConversations() {
     selectConversation,
     sendMessage,
     searchConversations,
+    startConversation,
     // Ações adicionais da API
     resolveConversation: (id: string) => ConversationsService.resolverConversa(id),
     assignAgent: (conversationId: string, agentId: string) =>

@@ -1,7 +1,12 @@
+import { ApiService } from "./api";
 
 
 
 
-export class ApiService {
+export class TemplateService {
+
+    static async listarTemplates() {
+        return ApiService.request(`/api/templates`);
+    }
 
 }

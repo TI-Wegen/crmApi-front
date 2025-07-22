@@ -23,6 +23,14 @@ export class ConversationsService {
     })
   }
 
+    static async iniciarConversaPorTemplate(dados: { contactId: string; templateName: string; bodyParameters:string[] }) {
+    return ApiService.request(`/api/Conversations/${dados.contactId}/senTemplate`, {
+      method: "POST",
+      body: JSON.stringify(dados),
+    })
+  }
+
+
   static async buscarConversa(id: string) {
     return ApiService.request(`/api/conversations/${id}`)
   }

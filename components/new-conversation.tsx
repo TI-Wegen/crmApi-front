@@ -10,6 +10,9 @@ import { useContacts } from "@/hooks/use-contacts"
 import { useConversationList } from "@/hooks/use-conversation-list"
 import type { ContatoDto } from "@/types/crm"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { useAgents } from "@/hooks/use-agents"
+import { UseTemplates } from "@/hooks/use-templates"
+import { useConversations } from "@/hooks/use-conversations"
 
 interface NewConversationProps {
   onConversationStarted?: (conversationId: string) => void
@@ -18,10 +21,9 @@ interface NewConversationProps {
 
 export default function NewConversation({ onConversationStarted, onCancel }: NewConversationProps) {
   const { contacts, searchContacts } = useContacts()
-  const { startConversation } = useConversationList()
-
+  const { startConversation } = useConversations()
+  const {templates,error} = UseTemplates()
   const [selectedContact, setSelectedContact] = useState<ContatoDto | null>(null)
-  const [message, setMessage] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
@@ -32,11 +34,17 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
   }
 
   const handleStartConversation = async () => {
-    if (!selectedContact || !message.trim()) return
-    const messageToSend = selectedTemplate ? `${selectedTemplate}\n${message.trim()}` : message.trim();
+    if (!selectedContact) return
+    console.log("Iniciando conversa com:", selectedTemplate)
+
+    const bodyParameters =  [selectedContact.nome]
     setLoading(true)
     try {
-      const conversation = await startConversation(selectedContact.id, messageToSend)
+      const conversation = await startConversation(
+        selectedContact.id,
+        selectedTemplate || "",
+        bodyParameters
+      )
       if (onConversationStarted) {
         onConversationStarted(conversation.id)
       }
@@ -122,22 +130,13 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
                     <SelectValue placeholder="Selecione um template (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Mocked templates - replace with actual data fetching */}
-                    <SelectItem value="Template 1: Olá [nome], obrigado pelo contato!">Template 1: Olá [nome], obrigado pelo contato!</SelectItem>
-                    <SelectItem value="Template 2: Promoção especial para você!">Template 2: Promoção especial para você!</SelectItem>
-                    <SelectItem value="Template 3: Lembrete de agendamento.">Template 3: Lembrete de agendamento.</SelectItem>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={`${template.name}`}>
+                         {template.name} : {template.body}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Mensagem (opcional)</label>
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Digite sua mensagem..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
               </div>
             </>
           )}
@@ -148,7 +147,7 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
               Cancelar
             </Button>
             {selectedContact && (
-              <Button onClick={handleStartConversation} disabled={!message.trim() || loading} className="flex-1">
+              <Button onClick={handleStartConversation} disabled={ loading} className="flex-1">
                 {loading ? "Iniciando..." : "Iniciar Conversa"}
               </Button>
             )}
