@@ -18,6 +18,7 @@ import { useSignalRConnectionStatus } from "@/hooks/useSignalRConnectionStatus";
 import { useAgents } from "@/hooks/use-agents";
 import { ConversationsProvider } from "@/contexts/ConversationsContext";
 import { useConversations } from "@/hooks/use-conversations";
+import { SignalRProvider } from "@/contexts/signalr-context";
 type ActiveTab = "conversations" | "contacts";
 
 // Atualizar o componente para usar conversas reais
@@ -45,13 +46,19 @@ function CRMContent() {
     loading: conversationsLoading,
     error: conversationsError,
     searchConversations,
+    markAsRead,
     filterByStatus,
-  } = useConversationList();
+  } = useConversationList(selectedConversation);
 
   // Carregar setores ao iniciar
   const { setores } = useAgents();
 
-  
+  const handleSelectAndMarkAsRead = (conversationId: string) => {
+    // Primeiro, marca a conversa como lida na lista
+    markAsRead(conversationId);
+    // Depois, seleciona a conversa para abrir o chat
+    selectConversation(conversationId);
+  };
 
   const handleStartConversation = (conversationId: string) => {
     setShowNewConversation(false);
@@ -201,12 +208,11 @@ function CRMContent() {
                   />
                   <div className="flex-1 overflow-hidden">
                     <ConversationList
-                      
                       conversations={conversations}
                       selectedId={selectedConversation || ""}
-                      onSelectConversation={selectConversation}
                       onSearch={searchConversations}
                       loading={conversationsLoading}
+                      onSelectConversation={handleSelectAndMarkAsRead}
                     />
                   </div>
                 </div>
@@ -239,12 +245,13 @@ function CRMContent() {
                       avatar: "/placeholder.svg?height=40&width=40",
                       status: conversationDetails.status,
                       atendimentoId: conversationDetails.atendimentoId,
-                      sessaoWhatsappAtiva: conversationDetails.sessaoWhatsappAtiva,
-                      sessaoWhatsappExpiraEm: conversationDetails.sessaoWhatsappExpiraEm,
+                      sessaoWhatsappAtiva:
+                        conversationDetails.sessaoWhatsappAtiva,
+                      sessaoWhatsappExpiraEm:
+                        conversationDetails.sessaoWhatsappExpiraEm,
                       contatoId: conversationDetails.contatoId || "",
                       agenteId: conversationDetails.agenteId || "",
                     }
-                    
                   : undefined
               }
               messages={messages}
@@ -277,7 +284,9 @@ function CRMContent() {
 export default function CRMPage() {
   return (
     <ProtectedRoute>
-            <CRMContent />
+      <SignalRProvider>
+        <CRMContent />
+      </SignalRProvider>
     </ProtectedRoute>
   );
 }

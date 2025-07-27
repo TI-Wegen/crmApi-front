@@ -1,8 +1,7 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useCallback } from "react";
-import { signalRService } from "@/services/signalr";
-import { useAuth } from "@/contexts/auth-context";
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useAuth } from "@/contexts/auth-context"
 import type {
   ConversationDetailsDto,
   MessageDto,
@@ -10,278 +9,230 @@ import type {
   Message,
   ConversationListItemDto,
   MessageWithConversationIdDto,
-} from "@/types/crm";
-import { formatMessageTimestamp } from "@/utils/date-formatter";
-import { ConversationsService } from "@/services/conversations";
+} from "@/types/crm"
+import { formatMessageTimestamp } from "@/utils/date-formatter"
+import { ConversationsService } from "@/services/conversations"
+import { signalRService } from "@/services/signalr"
+import { useSignalR } from "@/contexts/signalr-context"
 
 export function useConversations() {
-  const { isAuthenticated, token } = useAuth();
-  const [selectedConversation, setSelectedConversation] = useState<
-    string | null
-  >(null);
-  const [conversationDetails, setConversationDetails] =
-    useState<ConversationDetailsDto | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [signalRConnected, setSignalRConnected] = useState(false);
+   const { isAuthenticated } = useAuth()
+  const { isConnected: signalRConnected } = useSignalR()
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
+  const [conversationDetails, setConversationDetails] = useState<ConversationDetailsDto | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const messageIdsRef = useRef(new Set<string>())
 
   // Converter DTO para formato do frontend
-  const convertToFrontendFormat = useCallback(
-    (dto: ConversationListItemDto): Conversation => {
-      return {
-        id: dto.id,
-        contatoNome: dto.contatoNome,
-        lastMessage: dto.ultimaMensagemPreview,
-        timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
-        unread: dto.mensagensNaoLidas || 0,
-        avatar: `/placeholder.svg?height=40&width=40`,
-        status: dto.status,
-        agentName: dto.agenteNome || undefined,
-        atendimentoId: dto.atendimentoId || "",
-        sessaoWhatsappAtiva: dto.sessaoWhatsappAtiva,
-        sessaoWhatsappExpiraEm: dto.sessaoWhatsappExpiraEm || null,
-      };
-    },
-    []
-  );
-
-  const convertMessagesToFrontend = useCallback(
-    (dtoMessages: MessageDto[]): Message[] => {
-      return dtoMessages.map((msg) => ({
-        id: msg.id,
-        content: msg.texto,
-        timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isFromClient: msg.remetenteTipo === "Cliente",
-        date: new Date(msg.timestamp).toISOString().split("T")[0],
-        anexoUrl: msg.anexoUrl,
-      }));
-    },
-    []
-  );
-
-  // Conectar ao SignalR quando autenticado
-  useEffect(() => {
-    if (isAuthenticated && token) {
-      const connectSignalR = async () => {
-        try {
-          await signalRService.connect();
-          setSignalRConnected(true);
-          console.log("SignalR conectado com sucesso gay");
-        } catch (error) {
-          console.error("Erro ao conectar SignalR:", error);
-          setSignalRConnected(false);
-          // Não mostrar erro para o usuário, SignalR é opcional
-        }
-      };
-
-      connectSignalR();
-    } else {
-      // Desconectar SignalR quando não autenticado
-      signalRService.disconnect();
-      setSignalRConnected(false);
+  const convertToFrontendFormat = useCallback((dto: ConversationListItemDto): Conversation => {
+    return {
+      id: dto.id,
+      contatoNome: dto.contatoNome,
+      lastMessage: dto.ultimaMensagemPreview,
+      timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
+      avatar: `/placeholder.svg?height=40&width=40`,
+      status: dto.status,
+      agentName: dto.agenteNome || undefined,
+      atendimentoId: dto.atendimentoId || "",
+      sessaoWhatsappAtiva: dto.sessaoWhatsappAtiva,
+      sessaoWhatsappExpiraEm: dto.sessaoWhatsappExpiraEm || null,
     }
+  }, [])
 
-    return () => {
-      if (!isAuthenticated) {
-        signalRService.disconnect();
-      }
-    };
-  }, [isAuthenticated, token]);
+  const convertMessagesToFrontend = useCallback((dtoMessages: MessageDto[]): Message[] => {
+    return dtoMessages.map((msg) => ({
+      id: msg.id,
+      content: msg.texto,
+      timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      isFromClient: msg.remetenteTipo === "Cliente",
+      date: new Date(msg.timestamp).toISOString().split("T")[0],
+      anexoUrl: msg.anexoUrl,
+    }))
+  }, [])
+
 
   // Carregar conversa específica
   const loadConversation = useCallback(
     async (conversationId: string) => {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
+      messageIdsRef.current.clear() // Limpar IDs de mensagens anteriores
 
       try {
-        const details = (await ConversationsService.buscarConversa(
-          conversationId
-        )) as ConversationDetailsDto;
-        setConversationDetails(details);
-        setMessages(convertMessagesToFrontend(details.mensagens));
+        const details = (await ConversationsService.buscarConversa(conversationId)) as ConversationDetailsDto
+
+        setConversationDetails(details)
+        const frontendMessages = convertMessagesToFrontend(details.mensagens)
+        setMessages(frontendMessages)
+
+        // Armazenar IDs das mensagens carregadas
+        frontendMessages.forEach((msg) => messageIdsRef.current.add(msg.id))
 
         // Tentar entrar no grupo da conversa no SignalR (se conectado)
         if (signalRConnected) {
           try {
-            await signalRService.joinConversationGroup(conversationId);
+            await signalRService.joinConversationGroup(conversationId)
           } catch (signalRError) {
-            console.warn("Erro ao entrar no grupo SignalR:", signalRError);
+            console.warn("⚠️ Erro ao entrar no grupo SignalR:", signalRError)
             // Não bloquear o carregamento da conversa por erro do SignalR
           }
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao carregar conversa"
-        );
-        console.error("Erro ao carregar conversa:", err);
+        setError(err instanceof Error ? err.message : "Erro ao carregar conversa")
+        console.error("❌ Erro ao carregar conversa:", err)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     },
-    [convertMessagesToFrontend]
-  );
+    [convertMessagesToFrontend, signalRConnected],
+  )
 
   // Enviar mensagem
   const sendMessage = useCallback(
     async (content: string, file?: File) => {
-      if (!selectedConversation) return;
+      if (!selectedConversation) return
 
       try {
-        const formData = new FormData();
-        formData.append("Texto", content);
-        formData.append("RemetenteTipo", "Agente");
+        const formData = new FormData()
+        formData.append("Texto", content)
+        formData.append("RemetenteTipo", "Agente")
 
         if (file) {
-          formData.append("Anexo", file);
+          formData.append("Anexo", file)
         }
 
-        const newMessage = (await ConversationsService.adicionarMensagem(
-          selectedConversation,
-          formData
-        )) as MessageDto;
+        const newMessage = (await ConversationsService.adicionarMensagem(selectedConversation, formData)) as MessageDto
 
         const frontendMessage: Message = {
           id: newMessage.id,
           content: newMessage.texto,
-          timestamp: new Date(newMessage.timestamp).toLocaleTimeString(
-            "pt-BR",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
+          timestamp: new Date(newMessage.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
           isFromClient: false,
           date: new Date(newMessage.timestamp).toISOString().split("T")[0],
           anexoUrl: newMessage.anexoUrl,
-        };
+        }
 
-        setMessages((prev) => {
-          if (prev.some((msg) => msg.id === frontendMessage.id)) {
-            return prev;
-          }
-          return [...prev, frontendMessage];
-        });
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao enviar mensagem"
-        );
-        console.error("Erro ao enviar mensagem:", err);
-      }
-    },
-    [selectedConversation]
-  );
-
-  const startConversation = useCallback(
-    async (
-      contactId: string,
-      templateName: string,
-      bodyParameters: string[]
-    ) => {
-      try {
-        const response = await ConversationsService.iniciarConversaPorTemplate({
-          contactId,
-          templateName,
-          bodyParameters,
-        });
-
-        if (response) {
-          return response;
-        } else {
-          throw new Error("Erro ao iniciar conversa com template");
+        // Adicionar mensagem apenas se não existir
+        if (!messageIdsRef.current.has(frontendMessage.id)) {
+          messageIdsRef.current.add(frontendMessage.id)
+          setMessages((prev) => [...prev, frontendMessage])
         }
       } catch (err) {
-        console.error("Erro ao iniciar conversa com template:", err);
-        throw err;
+        setError(err instanceof Error ? err.message : "Erro ao enviar mensagem")
+        console.error("❌ Erro ao enviar mensagem:", err)
       }
     },
-    [signalRConnected]
-  );
+    [selectedConversation],
+  )
 
-  // Configurar listener do SignalR para novas mensagens
+  const startConversation = useCallback(async (contactId: string, templateName: string, bodyParameters: string[]) => {
+    try {
+      const response = await ConversationsService.iniciarConversaPorTemplate({
+        contactId,
+        templateName,
+        bodyParameters,
+      })
+
+      if (response) {
+        return response
+      } else {
+        throw new Error("Erro ao iniciar conversa com template")
+      }
+    } catch (err) {
+      console.error("❌ Erro ao iniciar conversa com template:", err)
+      throw err
+    }
+  }, [])
+
+  // Configurar listener do SignalR para novas mensagens APENAS para a conversa ativa
   useEffect(() => {
-    console.log("Conectado a BUCETA do SignalR:", signalRConnected);
-    if (!signalRConnected) {
-      return;
+    if (!signalRConnected  || !selectedConversation) {
+      return
     }
 
-    const handleNewMessage = (
-      messageWithConvId: MessageWithConversationIdDto
-    ) => {
-    
+    const handleNewMessage = (messageWithConvId: MessageWithConversationIdDto) => {
+      console.log("📨 Nova mensagem recebida via SignalR no chat:", messageWithConvId)
+
+      // Verificar se a mensagem é para a conversa atual
+      if (messageWithConvId.conversationId !== selectedConversation) {
+        console.log("📨 Mensagem não é para a conversa atual, ignorando no chat")
+        return
+      }
+
+      // Verificar se a mensagem já existe para evitar duplicatas
+      if (messageIdsRef.current.has(messageWithConvId.id)) {
+        console.log("📨 Mensagem já existe no chat, ignorando duplicata")
+        return
+      }
+
       const frontendMessage: Message = {
         id: messageWithConvId.id,
         content: messageWithConvId.texto,
-        timestamp: new Date(messageWithConvId.timestamp).toLocaleTimeString(
-          "pt-BR",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-          }
-        ),
+        timestamp: new Date(messageWithConvId.timestamp).toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         isFromClient: messageWithConvId.remetenteTipo === "Cliente",
         date: new Date(messageWithConvId.timestamp).toISOString().split("T")[0],
         anexoUrl: messageWithConvId.anexoUrl,
-      };
-      console.log("Nova mensagem recebida:", frontendMessage);
+      }
 
+      messageIdsRef.current.add(frontendMessage.id)
 
       setMessages((prev) => {
-      console.log("Mensagens no Chat:", [...prev, frontendMessage].length);
-      console.log("Última mensagem:", [...prev, frontendMessage][prev.length - 1]);
+        console.log(`📨 Adicionando mensagem ao chat. Total: ${prev.length + 1}`)
+        return [...prev, frontendMessage]
+      })
+    }
 
-        return [...prev, frontendMessage];
-      });
-
-    };
-
-    signalRService.onReceiveMessage(handleNewMessage);
+    const unsubscribe = signalRService.on("ReceiveMessage", handleNewMessage)
 
     return () => {
-      signalRService.offReceiveMessage();
-    };
-  }, [ signalRConnected]);
+     unsubscribe()
+      console.log("📨 Cleanup: Removendo listener de novas mensagens do SignalR")
+    }
+  }, [signalRConnected, selectedConversation])
 
   // Selecionar conversa
-const selectConversation = useCallback(
-  async (conversationId: string) => {
-
-    // Sair do grupo anterior no SignalR
-    if (selectedConversation && signalRConnected) {
-      try {
-        await signalRService.leaveConversationGroup(selectedConversation);
-      } catch (error) {
-        console.warn("Erro ao sair do grupo SignalR:", error);
+  const selectConversation = useCallback(
+    async (conversationId: string | null) => {
+      // Sair do grupo anterior no SignalR
+      if (selectedConversation && signalRConnected) {
+        try {
+          await signalRService.leaveConversationGroup(selectedConversation)
+        } catch (error) {
+          console.warn("⚠️ Erro ao sair do grupo SignalR:", error)
+        }
       }
-    }
 
-    setSelectedConversation(conversationId);
-    await loadConversation(conversationId);
+      setSelectedConversation(conversationId)
 
-    if (signalRConnected) {
-      try {
-        await signalRService.joinConversationGroup(conversationId);
-      } catch (error) {
-        console.warn("Erro ao entrar no grupo SignalR:", error);
+      if (conversationId) {
+        await loadConversation(conversationId)
+      } else {
+        setConversationDetails(null)
+        setMessages([])
+        messageIdsRef.current.clear()
       }
-    }
-  },
-  [selectedConversation, loadConversation, signalRConnected]
-);
-
+    },
+    [selectedConversation, loadConversation, signalRConnected],
+  )
 
   // Cleanup ao desmontar
-  useEffect(() => {
-
+useEffect(() => {
     return () => {
       if (selectedConversation && signalRConnected) {
-        signalRService.leaveConversationGroup(selectedConversation);
+        signalRService.leaveConversationGroup(selectedConversation)
       }
-    };
-  }, [selectedConversation, signalRConnected]);
+    }
+  }, [selectedConversation, signalRConnected])
 
-  return {
+ return {
     selectedConversation,
     conversationDetails,
     messages,
@@ -291,16 +242,12 @@ const selectConversation = useCallback(
     selectConversation,
     sendMessage,
     startConversation,
-    // Ações adicionais da API
-    resolveConversation: (id: string) =>
-      ConversationsService.resolverConversa(id),
+    resolveConversation: (id: string) => ConversationsService.resolverConversa(id),
     assignAgent: (conversationId: string, agentId: string) =>
       ConversationsService.atribuirAgente(conversationId, agentId),
-    transferConversation: (
-      conversationId: string,
-      data: { novoAgenteId?: string; novoSetorId?: string }
-    ) => ConversationsService.transferirConversa(conversationId, data),
+    transferConversation: (conversationId: string, data: { novoAgenteId?: string; novoSetorId?: string }) =>
+      ConversationsService.transferirConversa(conversationId, data),
     convertToFrontendFormat,
     convertMessagesToFrontend,
-  };
+  }
 }

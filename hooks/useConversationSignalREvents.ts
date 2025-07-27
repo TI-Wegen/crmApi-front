@@ -1,87 +1,70 @@
+"use client";
+
 import { useEffect } from "react";
 import { signalRService } from "@/services/signalr";
-import type { MessageWithConversationIdDto, ConversationSummaryDto, Conversation } from "@/types/crm";
-import signalR, { HubConnectionState } from "@microsoft/signalr";
+import { useSignalR } from "@/contexts/signalr-context";
+import type {
+  ConversationSummaryDto,
+  MessageWithConversationIdDto,
+  Conversation,
+} from "@/types/crm";
 
-
-
-type Params = {
-  groups?: string[]; // permite múltiplos grupos
+interface UseConversationSignalREventsProps {
+  groups?: string[];
+  onNewConversation: (conversationDto: ConversationSummaryDto) => void;
   onNewMessage: (message: MessageWithConversationIdDto) => void;
-  onNewConversation: (convo: ConversationSummaryDto) => void;
-  onStatusChange: (conversationId: string, status: Conversation["status"]) => void;
-  onError?: (msg: string) => void;
-};
+  onStatusChange: (data: {
+    conversationId: string;
+    status: Conversation["status"];
+  }) => void;
+  onError?: (error: string) => void;
+}
 
-export function useConversationSignalREvents({
-  groups = ["UnassignedQueue"],
-  onNewMessage,
+export const useConversationSignalREvents = ({
+  groups = [],
   onNewConversation,
+  onNewMessage,
   onStatusChange,
-  onError,
-}: Params) {
+}: UseConversationSignalREventsProps) => {
+  const { isConnected } = useSignalR();
+
   useEffect(() => {
-    let isMounted = true;
+        console.log(`[PASSO 2] Hook de eventos ativado. Conectado: ${isConnected}. Tentando entrar nos grupos:`, groups);
 
-    const setup = async () => {
-      try {
-        await signalRService.connect();
+    if (!isConnected) {
+      return;
+    }
 
-        let attempts = 0;
-        const maxAttempts = 10;
-        while (
-          signalRService.getConnectionState() !== HubConnectionState.Connected &&
-          attempts < maxAttempts
-        ) {
-          await new Promise((res) => setTimeout(res, 300));
-          attempts++;
-        }
+    groups.forEach((groupName) => {
+      signalRService.joinConversationGroup(groupName).catch((err) => {
+        console.error(`Falha ao entrar no grupo ${groupName}`, err);
+      });
+    });
+    const unsubscribeNewConv = signalRService.on(
+      "ReceiveNewConversation",
+      onNewConversation
+    );
+    const unsubscribeStatusChange = signalRService.on(
+      "ConversationStatusChanged",
+      onStatusChange
+    );
+    const unsubscribeMessage = signalRService.on(
+      "ReceiveMessage",
+      onNewMessage
+    );
 
-        if (!signalRService.isConnected()) {
-          onError?.("Falha ao conectar com SignalR");
-          return;
-        }
-
-        // Entrar nos grupos
-        for (const group of groups) {
-          await signalRService.joinGroup(group);
-          console.log(`✅ Entrou no grupo '${group}'`);
-        }
-
-        if (!isMounted) return;
-
-        signalRService.onReceiveNewConversation(onNewConversation);
-        signalRService.onReceiveMessage(onNewMessage);
-        signalRService.onConversationStatusChanged(onStatusChange);
-      } catch (err) {
-        console.error("❌ Erro no SignalR:", err);
-        onError?.("Erro ao conectar com SignalR");
-      }
-    };
-
-    setup();
-
+    // A função de cleanup agora chama as funções de "unsubscribe" retornadas.
     return () => {
-      isMounted = false;
-
-      // Limpar os handlers
-      signalRService.offReceiveNewConversation();
-      signalRService.offReceiveMessage();
-      signalRService.offConversationStatusChanged();
-
-      // Sair dos grupos conectados
-      groups.forEach(async (group) => {
-        try {
-          await signalRService.leaveGroup(group);
-          console.log(`👋 Saiu do grupo '${group}'`);
-        } catch (err) {
-          console.warn(`⚠️ Falha ao sair do grupo '${group}':`, err);
-        }
+      unsubscribeNewConv();
+      unsubscribeStatusChange();
+      unsubscribeMessage();
+      groups.forEach((groupName) => {
+        signalRService.leaveConversationGroup(groupName).catch((err) => {
+          console.error(`Falha ao sair do grupo ${groupName}`, err);
+        });
       });
     };
-  }, [groups, onNewMessage, onNewConversation, onStatusChange, onError]);
-}
+  }, [isConnected, onNewConversation, onNewMessage, onStatusChange]);
 
-export function useSignalRConnectionStatus() {
-  return signalRService.isConnected();
-}
+  return isConnected;
+};

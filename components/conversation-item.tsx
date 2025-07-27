@@ -10,7 +10,7 @@ import {
   parseISO,
   isBefore,
 } from "date-fns";
-import ptBR from "date-fns/locale/pt-BR";
+import { ptBR } from "date-fns/locale/pt-BR";
 // Atualizar a interface para incluir agentName
 interface ConversationItemProps {
   conversation: Conversation & { agentName?: string };
@@ -36,6 +36,9 @@ export default function ConversationItem({
         return null;
     }
   };
+
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
