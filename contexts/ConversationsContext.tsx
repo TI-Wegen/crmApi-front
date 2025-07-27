@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { signalRService } from "@/services/signalr";
-import { useAuth } from "@/contexts/auth-context";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  useRef,
+} from "react";
 import type {
   ConversationDetailsDto,
   MessageDto,
@@ -13,20 +19,55 @@ import type {
 } from "@/types/crm";
 import { formatMessageTimestamp } from "@/utils/date-formatter";
 import { ConversationsService } from "@/services/conversations";
+import { signalRService } from "@/services/signalr";
+import { useAuth } from "@/contexts/auth-context";
 
-export function useConversations() {
+interface ConversationsContextType {
+  selectedConversation: string | null;
+  conversationDetails: ConversationDetailsDto | null;
+  messages: Message[];
+  loading: boolean;
+  error: string | null;
+  signalRConnected: boolean;
+
+  selectConversation: (conversationId: string) => Promise<void>;
+  sendMessage: (content: string, file?: File) => Promise<void>;
+  startConversation: (
+    contactId: string,
+    templateName: string,
+    bodyParameters: string[]
+  ) => Promise<any>;
+
+  resolveConversation: (id: string) => Promise<void>;
+  assignAgent: (conversationId: string, agentId: string) => Promise<void>;
+  transferConversation: (
+    conversationId: string,
+    data: { novoAgenteId?: string; novoSetorId?: string }
+  ) => Promise<void>;
+
+  convertToFrontendFormat: (dto: ConversationListItemDto) => Conversation;
+  convertMessagesToFrontend: (dtoMessages: MessageDto[]) => Message[];
+}
+
+const ConversationsContext = createContext<ConversationsContextType | undefined>(
+  undefined
+);
+
+export const ConversationsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, token } = useAuth();
-  const [selectedConversation, setSelectedConversation] = useState<
-    string | null
-  >(null);
+
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(
+    null
+  );
   const [conversationDetails, setConversationDetails] =
     useState<ConversationDetailsDto | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signalRConnected, setSignalRConnected] = useState(false);
+const selectedConversationRef = useRef(selectedConversation);
 
-  // Converter DTO para formato do frontend
+  // Converter DTO para frontend
   const convertToFrontendFormat = useCallback(
     (dto: ConversationListItemDto): Conversation => {
       return {
@@ -63,24 +104,21 @@ export function useConversations() {
     []
   );
 
-  // Conectar ao SignalR quando autenticado
+  // Gerenciar conexão SignalR
   useEffect(() => {
     if (isAuthenticated && token) {
       const connectSignalR = async () => {
         try {
           await signalRService.connect();
           setSignalRConnected(true);
-          console.log("SignalR conectado com sucesso gay");
+          console.log("SignalR conectado com sucesso");
         } catch (error) {
           console.error("Erro ao conectar SignalR:", error);
           setSignalRConnected(false);
-          // Não mostrar erro para o usuário, SignalR é opcional
         }
       };
-
       connectSignalR();
     } else {
-      // Desconectar SignalR quando não autenticado
       signalRService.disconnect();
       setSignalRConnected(false);
     }
@@ -92,12 +130,11 @@ export function useConversations() {
     };
   }, [isAuthenticated, token]);
 
-  // Carregar conversa específica
+  // Load conversa
   const loadConversation = useCallback(
     async (conversationId: string) => {
       setLoading(true);
       setError(null);
-
       try {
         const details = (await ConversationsService.buscarConversa(
           conversationId
@@ -105,25 +142,21 @@ export function useConversations() {
         setConversationDetails(details);
         setMessages(convertMessagesToFrontend(details.mensagens));
 
-        // Tentar entrar no grupo da conversa no SignalR (se conectado)
         if (signalRConnected) {
           try {
             await signalRService.joinConversationGroup(conversationId);
           } catch (signalRError) {
             console.warn("Erro ao entrar no grupo SignalR:", signalRError);
-            // Não bloquear o carregamento da conversa por erro do SignalR
           }
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao carregar conversa"
-        );
+        setError(err instanceof Error ? err.message : "Erro ao carregar conversa");
         console.error("Erro ao carregar conversa:", err);
       } finally {
         setLoading(false);
       }
     },
-    [convertMessagesToFrontend]
+    [convertMessagesToFrontend, signalRConnected]
   );
 
   // Enviar mensagem
@@ -136,9 +169,7 @@ export function useConversations() {
         formData.append("Texto", content);
         formData.append("RemetenteTipo", "Agente");
 
-        if (file) {
-          formData.append("Anexo", file);
-        }
+        if (file) formData.append("Anexo", file);
 
         const newMessage = (await ConversationsService.adicionarMensagem(
           selectedConversation,
@@ -148,31 +179,29 @@ export function useConversations() {
         const frontendMessage: Message = {
           id: newMessage.id,
           content: newMessage.texto,
-          timestamp: new Date(newMessage.timestamp).toLocaleTimeString(
-            "pt-BR",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
+          timestamp: new Date(newMessage.timestamp).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           isFromClient: false,
           date: new Date(newMessage.timestamp).toISOString().split("T")[0],
           anexoUrl: newMessage.anexoUrl,
         };
 
+
         setMessages((prev) => {
-          if (prev.some((msg) => msg.id === frontendMessage.id)) {
-            return prev;
-          }
+          if (prev.some((msg) => msg.id === frontendMessage.id)) return prev;
           return [...prev, frontendMessage];
         });
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Erro ao enviar mensagem"
-        );
+        setError(err instanceof Error ? err.message : "Erro ao enviar mensagem");
         console.error("Erro ao enviar mensagem:", err);
       }
     },
     [selectedConversation]
   );
 
+  // Iniciar conversa com template
   const startConversation = useCallback(
     async (
       contactId: string,
@@ -186,68 +215,70 @@ export function useConversations() {
           bodyParameters,
         });
 
-        if (response) {
-          return response;
-        } else {
-          throw new Error("Erro ao iniciar conversa com template");
-        }
+        if (!response) throw new Error("Erro ao iniciar conversa com template");
+        return response;
       } catch (err) {
         console.error("Erro ao iniciar conversa com template:", err);
         throw err;
       }
     },
-    [signalRConnected]
+    []
   );
+useEffect(() => {
+  selectedConversationRef.current = selectedConversation;
+}, [selectedConversation]);
+  // Listener SignalR para mensagens novas
+useEffect(() => {
+  if (!signalRConnected) return;
 
-  // Configurar listener do SignalR para novas mensagens
-  useEffect(() => {
-    console.log("Conectado a BUCETA do SignalR:", signalRConnected);
-    if (!signalRConnected) {
-      return;
-    }
+  const handleNewMessage = (messageWithConvId: MessageWithConversationIdDto) => {
+    console.log("Nova mensagem recebida no SignalR:", messageWithConvId);
 
-    const handleNewMessage = (
-      messageWithConvId: MessageWithConversationIdDto
-    ) => {
-    
-      const frontendMessage: Message = {
-        id: messageWithConvId.id,
-        content: messageWithConvId.texto,
-        timestamp: new Date(messageWithConvId.timestamp).toLocaleTimeString(
-          "pt-BR",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-          }
-        ),
-        isFromClient: messageWithConvId.remetenteTipo === "Cliente",
-        date: new Date(messageWithConvId.timestamp).toISOString().split("T")[0],
-        anexoUrl: messageWithConvId.anexoUrl,
-      };
-      console.log("Nova mensagem recebida:", frontendMessage);
+    const isCurrent =
+      messageWithConvId.conversationId === selectedConversationRef.current;
 
+    const frontendMessage: Message = {
+      id: messageWithConvId.id,
+      content: messageWithConvId.texto,
+      timestamp: new Date(messageWithConvId.timestamp).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      isFromClient: messageWithConvId.remetenteTipo === "Cliente",
+      date: new Date(messageWithConvId.timestamp).toISOString().split("T")[0],
+      anexoUrl: messageWithConvId.anexoUrl,
+    };
 
+    if (isCurrent) {
+      // ✅ Atualiza a lista de mensagens
       setMessages((prev) => {
-      console.log("Mensagens no Chat:", [...prev, frontendMessage].length);
-      console.log("Última mensagem:", [...prev, frontendMessage][prev.length - 1]);
-
-        return [...prev, frontendMessage];
+        const exists = prev.some((msg) => msg.id === frontendMessage.id);
+        return exists ? prev : [...prev, frontendMessage];
       });
 
-    };
+      // ✅ Atualiza o preview da conversa atual
+      setConversationDetails((prev) =>
+        prev
+          ? {
+              ...prev,
+              ultimaMensagemPreview: frontendMessage.content,
+              ultimaMensagemTimestamp: new Date().toISOString(),
+            }
+          : prev
+      );
+    }
 
-    signalRService.onReceiveMessage(handleNewMessage);
+    // ❗️Você pode futuramente emitir um evento global para atualizar outras conversas também
+  };
 
-    return () => {
-      signalRService.offReceiveMessage();
-    };
-  }, [ signalRConnected]);
+  signalRService.onReceiveMessage(handleNewMessage);
+  return () => signalRService.offReceiveMessage();
+}, [signalRConnected]);
+
 
   // Selecionar conversa
 const selectConversation = useCallback(
   async (conversationId: string) => {
-
-    // Sair do grupo anterior no SignalR
     if (selectedConversation && signalRConnected) {
       try {
         await signalRService.leaveConversationGroup(selectedConversation);
@@ -271,9 +302,8 @@ const selectConversation = useCallback(
 );
 
 
-  // Cleanup ao desmontar
+  // Cleanup ao desmontar/conversa mudar
   useEffect(() => {
-
     return () => {
       if (selectedConversation && signalRConnected) {
         signalRService.leaveConversationGroup(selectedConversation);
@@ -281,26 +311,52 @@ const selectConversation = useCallback(
     };
   }, [selectedConversation, signalRConnected]);
 
-  return {
-    selectedConversation,
-    conversationDetails,
-    messages,
-    loading,
-    error,
-    signalRConnected,
-    selectConversation,
-    sendMessage,
-    startConversation,
-    // Ações adicionais da API
-    resolveConversation: (id: string) =>
-      ConversationsService.resolverConversa(id),
-    assignAgent: (conversationId: string, agentId: string) =>
-      ConversationsService.atribuirAgente(conversationId, agentId),
-    transferConversation: (
-      conversationId: string,
-      data: { novoAgenteId?: string; novoSetorId?: string }
-    ) => ConversationsService.transferirConversa(conversationId, data),
-    convertToFrontendFormat,
-    convertMessagesToFrontend,
-  };
-}
+  // Ações adicionais da API
+  const resolveConversation = useCallback((id: string) => {
+    return ConversationsService.resolverConversa(id);
+  }, []);
+
+  const assignAgent = useCallback((conversationId: string, agentId: string) => {
+    return ConversationsService.atribuirAgente(conversationId, agentId);
+  }, []);
+
+  const transferConversation = useCallback(
+    (conversationId: string, data: { novoAgenteId?: string; novoSetorId?: string }) => {
+      return ConversationsService.transferirConversa(conversationId, data);
+    },
+    []
+  );
+
+  return (
+    <ConversationsContext.Provider
+      value={{
+        selectedConversation,
+        conversationDetails,
+        messages,
+        loading,
+        error,
+        signalRConnected,
+        selectConversation,
+        sendMessage,
+        startConversation,
+        resolveConversation,
+        assignAgent,
+        transferConversation,
+        convertToFrontendFormat,
+        convertMessagesToFrontend,
+      }}
+    >
+      {children}
+    </ConversationsContext.Provider>
+  );
+};
+
+export const useConversations = () => {
+  const context = useContext(ConversationsContext);
+  if (!context) {
+    throw new Error(
+      "useConversations deve ser usado dentro de um ConversationsProvider"
+    );
+  }
+  return context;
+};

@@ -3,7 +3,7 @@ import { TemplateDto } from "@/types/crm";
 import { use, useCallback, useEffect, useState } from "react";
 
 
-export function UseTemplates() {
+export function useTemplates() {
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

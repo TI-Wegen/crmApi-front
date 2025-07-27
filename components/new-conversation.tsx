@@ -5,13 +5,10 @@ import { MessageCircle, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
 import { useContacts } from "@/hooks/use-contacts"
-import { useConversationList } from "@/hooks/use-conversation-list"
 import type { ContatoDto } from "@/types/crm"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { useAgents } from "@/hooks/use-agents"
-import { UseTemplates } from "@/hooks/use-templates"
+import { useTemplates } from "@/hooks/use-templates"
 import { useConversations } from "@/hooks/use-conversations"
 
 interface NewConversationProps {
@@ -22,7 +19,7 @@ interface NewConversationProps {
 export default function NewConversation({ onConversationStarted, onCancel }: NewConversationProps) {
   const { contacts, searchContacts } = useContacts()
   const { startConversation } = useConversations()
-  const {templates,error} = UseTemplates()
+  const {templates,error} = useTemplates()
   const [selectedContact, setSelectedContact] = useState<ContatoDto | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -35,7 +32,6 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
 
   const handleStartConversation = async () => {
     if (!selectedContact) return
-    console.log("Iniciando conversa com:", selectedTemplate)
 
     const bodyParameters =  [selectedContact.nome]
     setLoading(true)

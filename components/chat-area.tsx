@@ -35,6 +35,8 @@ interface ChatAreaProps {
   loading?: boolean
   onEndConversation: (atendimentoId: string) => Promise<void>
   onTransferConversation: (conversationId: string, setorId: string) => Promise<void>
+    onConversationStarted?: (conversationId: string) => void
+
   setores: SetorDto[]
 }
 
@@ -46,6 +48,7 @@ export default function ChatArea({
   loading,
   onEndConversation,
   onTransferConversation,
+  onConversationStarted,
   setores,
 }: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -56,6 +59,7 @@ export default function ChatArea({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
   }
+
 
   useEffect(() => {
     scrollToBottom()
@@ -74,6 +78,7 @@ export default function ChatArea({
       </div>
     )
   }
+
 
   // Agrupar mensagens por data
   const groupedMessages = messages.reduce(
@@ -117,7 +122,7 @@ export default function ChatArea({
     setIsSubmitting(false)
     setIsTransferModalOpen(false)
     setSelectedSetor("")
-  }
+  }   
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -127,21 +132,16 @@ export default function ChatArea({
           <div className="flex items-center space-x-3">
             <img
               src={conversation.avatar || "/placeholder.svg"}
-              alt={conversation.clientName}
+              alt={conversation.contatoNome}
               className="w-10 h-10 rounded-full object-cover"
             />
             <div>
-              <h2 className="font-medium text-gray-900">{conversation.clientName}</h2>
+              <h2 className="font-medium text-gray-900">{conversation.contatoNome}</h2>
               <p className="text-sm text-green-500">Online</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Video className="h-4 w-4" />
-            </Button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" disabled={isSubmitting}>
@@ -195,7 +195,14 @@ export default function ChatArea({
           </div>
         </div>
       )}
-      <MessageInput onSendMessage={onSendMessage} />
+
+      <MessageInput onSendMessage={onSendMessage} 
+      sessaoAtiva={conversation.sessaoWhatsappAtiva}
+      onConversationStarted={onConversationStarted}
+      conversationId={conversation.contatoId}
+      contactName={conversation.contatoNome}
+      
+       />
 
       {/* Modal de Transferência */}
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>

@@ -5,21 +5,19 @@ import { MessageCircle, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiService } from "@/services/api";
 import { toast, Toaster } from "sonner";
-import type { Setor } from "@/types/crm";
 import ConversationList from "@/components/conversation-list";
 import ChatArea from "@/components/chat-area";
 import ContactsManager from "@/components/contacts-manager";
 import NewConversation from "@/components/new-conversation";
-import { useConversations } from "@/hooks/use-conversations";
 import { useConversationList } from "@/hooks/use-conversation-list";
 // Adicionar import do filtro
 import ConversationFilters from "@/components/conversation-filters";
 import ProtectedRoute from "@/components/protected-route";
 import UserHeader from "@/components/user-header";
 import { useSignalRConnectionStatus } from "@/hooks/useSignalRConnectionStatus";
-import { TesteSignalR } from "@/components/tests/testeSignalR";
-import { TestConversationHook } from "@/components/tests/TestConversations";
 import { useAgents } from "@/hooks/use-agents";
+import { ConversationsProvider } from "@/contexts/ConversationsContext";
+import { useConversations } from "@/hooks/use-conversations";
 type ActiveTab = "conversations" | "contacts";
 
 // Atualizar o componente para usar conversas reais
@@ -39,13 +37,11 @@ function CRMContent() {
     error: chatError,
     selectConversation,
     resolveConversation,
-    transferConversation,
     sendMessage,
   } = useConversations();
 
   const {
     conversations,
-    signalRConnected,
     loading: conversationsLoading,
     error: conversationsError,
     searchConversations,
@@ -54,6 +50,8 @@ function CRMContent() {
 
   // Carregar setores ao iniciar
   const { setores } = useAgents();
+
+  
 
   const handleStartConversation = (conversationId: string) => {
     setShowNewConversation(false);
@@ -71,7 +69,7 @@ function CRMContent() {
   ) => {
     setConversationFilter(filter);
     if (filter === "all") {
-      filterByStatus();
+      // filterByStatus();
     } else {
       filterByStatus(filter);
     }
@@ -203,6 +201,7 @@ function CRMContent() {
                   />
                   <div className="flex-1 overflow-hidden">
                     <ConversationList
+                      
                       conversations={conversations}
                       selectedId={selectedConversation || ""}
                       onSelectConversation={selectConversation}
@@ -226,7 +225,7 @@ function CRMContent() {
                 conversationDetails
                   ? {
                       id: conversationDetails.id,
-                      clientName: conversationDetails.contato?.nome || "",
+                      contatoNome: conversationDetails.contatoNome || "",
                       lastMessage: conversationDetails.ultimaMensagem || "",
                       timestamp: conversationDetails.ultimaMensagemEm
                         ? new Date(
@@ -240,7 +239,12 @@ function CRMContent() {
                       avatar: "/placeholder.svg?height=40&width=40",
                       status: conversationDetails.status,
                       atendimentoId: conversationDetails.atendimentoId,
+                      sessaoWhatsappAtiva: conversationDetails.sessaoWhatsappAtiva,
+                      sessaoWhatsappExpiraEm: conversationDetails.sessaoWhatsappExpiraEm,
+                      contatoId: conversationDetails.contatoId || "",
+                      agenteId: conversationDetails.agenteId || "",
                     }
+                    
                   : undefined
               }
               messages={messages}
@@ -248,7 +252,12 @@ function CRMContent() {
               loading={chatLoading}
               onEndConversation={handleEndConversation}
               onTransferConversation={handleTransferConversation}
+              onConversationStarted={handleStartConversation}
               setores={setores}
+              sessaoAtiva={conversationDetails?.sessaoWhatsappAtiva || false}
+              selectedContact={conversationDetails?.contato}
+              conversationFilter={conversationFilter}
+              onFilterChange={handleFilterChange}
             />
           </div>
 
@@ -268,7 +277,7 @@ function CRMContent() {
 export default function CRMPage() {
   return (
     <ProtectedRoute>
-      <CRMContent />
+            <CRMContent />
     </ProtectedRoute>
   );
 }

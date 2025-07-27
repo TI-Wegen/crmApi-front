@@ -48,7 +48,7 @@ export default function ConversationList({
     const term = searchTerm.toLowerCase()
     return conversations.filter(
       (conversation) =>
-        conversation.clientName.toLowerCase().includes(term) ||
+        conversation.contatoNome.toLowerCase().includes(term) ||
         conversation.lastMessage.toLowerCase().includes(term) ||
         (conversation.agentName && conversation.agentName.toLowerCase().includes(term)),
     )

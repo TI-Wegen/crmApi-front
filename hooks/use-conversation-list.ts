@@ -17,26 +17,26 @@ import { ConversationsService } from "@/services/conversations";
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
   return {
     id: dto.id,
-    clientName: dto.contatoNome,
+    contatoNome: dto.contatoNome,
     lastMessage: dto.ultimaMensagemPreview,
-    // Usamos a função de formatação de data que já criamos.
     timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
-    // Guardamos o timestamp original para uma ordenação precisa.
     unread: dto.mensagensNaoLidas || 0,
     avatar: `/placeholder.svg?height=40&width=40`,
     status: dto.status,
     agentName: dto.agenteNome || undefined,
     atendimentoId: dto.atendimentoId || "", // Novo campo para o ID do atendimento
+    sessaoWhatsappAtiva: dto.sessaoWhatsappAtiva,
+    sessaoWhatsappExpiraEm: dto.sessaoWhatsappExpiraEm || null,
   };
 }
 
 function convertSummaryToConversation(dto: ConversationSummaryDto): Conversation {
   return {
     id: dto.id,
-    clientName: dto.contatoNome,
+    contatoNome: dto.contatoNome,
     lastMessage: dto.ultimaMensagemPreview,
     timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
-    unread: 1, // sempre começa com 1 mensagem não lida
+    unread: dto.mensagensNaoLidas , // sempre começa com 1 mensagem não lida
     avatar: `/placeholder.svg?height=40&width=40`,
     status: dto.status,
     agentName: dto.agenteNome || undefined,
@@ -95,19 +95,6 @@ export function useConversationList() {
     );
   }, []);
 
-  const updateConversationWithMessage = useCallback(
-    (message: MessageDto & { conversaId: string }) => {
-      updateConversationInList(message.conversaId, (prevConv) => ({
-        lastMessage: message.texto,
-        timestamp: formatMessageTimestamp(message.timestamp),
-        unread:
-          message.remetenteTipo === "Cliente"
-            ? (prevConv?.unread || 0) + 1
-            : prevConv?.unread || 0,
-      }));
-    },
-    [updateConversationInList]
-  );
 
  const addOrUpdateConversation = useCallback((newConversation: Conversation) => {
     setConversations((prev) => {
