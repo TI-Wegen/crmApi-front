@@ -126,7 +126,7 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* <div className="flex items-center space-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -152,7 +152,7 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 </CardContent>
               </Card>

@@ -48,7 +48,7 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
                 </Button>
               </Link>
             </li>
-            <li>
+            {/* <li>
              <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
                   Dashboard
@@ -68,7 +68,7 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
                   Contatos
                 </Button>
               </Link>
-            </li>
+            </li> */}
           </ul>
 
         </nav>

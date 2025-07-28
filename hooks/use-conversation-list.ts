@@ -157,7 +157,6 @@ const markAsRead = useCallback((conversationId: string) => {
 
  const handleNewConversation = useCallback(
     (convoDto: ConversationSummaryDto) => {
-      console.log("📨 Nova conversa recebida via SignalR:", convoDto)
       const newConversation = convertSummaryToConversation(convoDto)
       addOrUpdateConversation(newConversation)
     },
