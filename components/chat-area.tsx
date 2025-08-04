@@ -93,20 +93,32 @@ export default function ChatArea({
     {} as Record<string, Message[]>,
   )
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
+ function formatDate(dateString: string): string {
+  const date = parseDateLocal(dateString)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isToday = date.toDateString() === today.toDateString()
+  const isYesterday = date.toDateString() === yesterday.toDateString()
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Hoje"
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Ontem"
-    } else {
-      return date.toLocaleDateString("pt-BR")
-    }
+  if (isToday) {
+    return "Hoje"
   }
+
+  if (isYesterday) {
+    return "Ontem"
+  }
+
+  return date.toLocaleDateString("pt-BR")
+}
+function parseDateLocal(dateString: string): Date {
+  // Se receber só "YYYY-MM-DD", converte para "YYYY-MM-DDT00:00:00"
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return new Date(dateString + "T00:00:00")
+  }
+  return new Date(dateString)
+}
+
 
   const handleEnd = async () => {
     if (!conversation) return

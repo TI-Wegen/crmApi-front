@@ -31,7 +31,7 @@ export function useConversations() {
       id: dto.id,
       contatoNome: dto.contatoNome,
       lastMessage: dto.ultimaMensagemPreview,
-      timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
+      timestamp: dto.ultimaMensagemTimestamp,
       avatar: `/placeholder.svg?height=40&width=40`,
       status: dto.status,
       agentName: dto.agenteNome || undefined,
@@ -45,10 +45,7 @@ export function useConversations() {
     return dtoMessages.map((msg) => ({
       id: msg.id,
       content: msg.texto,
-      timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      timestamp: formatMessageTimestamp(msg.timestamp),
       isFromClient: msg.remetenteTipo === "Cliente",
       date: new Date(msg.timestamp).toISOString().split("T")[0],
       anexoUrl: msg.anexoUrl,

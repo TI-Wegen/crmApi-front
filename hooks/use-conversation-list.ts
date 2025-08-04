@@ -135,6 +135,7 @@ const markAsRead = useCallback((conversationId: string) => {
 
         const frontendConversations = dtos.map(convertDtoToConversation)
 
+
         // Atualizar ref com IDs das conversas
         conversationIdsRef.current.clear()
         frontendConversations.forEach((conv) => conversationIdsRef.current.add(conv.id))
@@ -156,8 +157,8 @@ const markAsRead = useCallback((conversationId: string) => {
   }, [updateConversationInList])
 
  const handleNewConversation = useCallback(
-    (convoDto: ConversationSummaryDto) => {
-      const newConversation = convertSummaryToConversation(convoDto)
+    (convoDto: ConversationListItemDto) => {
+      const newConversation = convertDtoToConversation(convoDto)
       addOrUpdateConversation(newConversation)
     },
     [addOrUpdateConversation],

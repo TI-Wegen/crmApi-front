@@ -133,7 +133,7 @@ export default function ConversationItem({
                   conversation.sessaoWhatsappExpiraEm
                 );
                 return <div title={title} className={`text-xs ${color}`}>
-                  <Clock3 size={18} className={color}  />;
+                  <Clock3 size={18} className={color}  />
                 </div>
               })()
             ) : (

@@ -29,7 +29,6 @@ export const useConversationSignalREvents = ({
   const { isConnected } = useSignalR();
 
   useEffect(() => {
-        console.log(`[PASSO 2] Hook de eventos ativado. Conectado: ${isConnected}. Tentando entrar nos grupos:`, groups);
 
     if (!isConnected) {
       return;
