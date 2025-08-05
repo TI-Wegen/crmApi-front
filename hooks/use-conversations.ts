@@ -170,10 +170,7 @@ export function useConversations() {
       const frontendMessage: Message = {
         id: messageWithConvId.id,
         content: messageWithConvId.texto,
-        timestamp: new Date(messageWithConvId.timestamp).toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        timestamp: formatMessageTimestamp(messageWithConvId.timestamp),
         isFromClient: messageWithConvId.remetenteTipo === "Cliente",
         date: new Date(messageWithConvId.timestamp).toISOString().split("T")[0],
         anexoUrl: messageWithConvId.anexoUrl,
@@ -195,10 +192,8 @@ export function useConversations() {
     }
   }, [signalRConnected, selectedConversation])
 
-  // Selecionar conversa
   const selectConversation = useCallback(
     async (conversationId: string | null) => {
-      // Sair do grupo anterior no SignalR
       if (selectedConversation && signalRConnected) {
         try {
           await signalRService.leaveConversationGroup(selectedConversation)
@@ -220,7 +215,6 @@ export function useConversations() {
     [selectedConversation, loadConversation, signalRConnected],
   )
 
-  // Cleanup ao desmontar
 useEffect(() => {
     return () => {
       if (selectedConversation && signalRConnected) {
