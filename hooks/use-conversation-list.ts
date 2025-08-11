@@ -123,7 +123,7 @@ const markAsRead = useCallback((conversationId: string) => {
       try {
         const dtos = (await ConversationsService.listarConversas({
           pageNumber: 1,
-          pageSize: 50,
+          pageSize: 1000,
           setorId: user?.setorId,
           ...params,
         })) as ConversationListItemDto[]

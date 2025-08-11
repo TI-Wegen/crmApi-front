@@ -53,12 +53,11 @@ export function useConversations() {
   }, [])
 
 
-  // Carregar conversa específica
   const loadConversation = useCallback(
     async (conversationId: string) => {
       setLoading(true)
       setError(null)
-      messageIdsRef.current.clear() // Limpar IDs de mensagens anteriores
+      messageIdsRef.current.clear()
 
       try {
         const details = (await ConversationsService.buscarConversa(conversationId)) as ConversationDetailsDto
@@ -67,16 +66,13 @@ export function useConversations() {
         const frontendMessages = convertMessagesToFrontend(details.mensagens)
         setMessages(frontendMessages)
 
-        // Armazenar IDs das mensagens carregadas
         frontendMessages.forEach((msg) => messageIdsRef.current.add(msg.id))
 
-        // Tentar entrar no grupo da conversa no SignalR (se conectado)
         if (signalRConnected) {
           try {
             await signalRService.joinConversationGroup(conversationId)
           } catch (signalRError) {
             console.warn("⚠️ Erro ao entrar no grupo SignalR:", signalRError)
-            // Não bloquear o carregamento da conversa por erro do SignalR
           }
         }
       } catch (err) {
@@ -89,7 +85,6 @@ export function useConversations() {
     [convertMessagesToFrontend, signalRConnected],
   )
 
-  // Enviar mensagem
   const sendMessage = useCallback(
     async (content: string, file?: File) => {
       if (!selectedConversation) return
