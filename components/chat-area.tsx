@@ -25,9 +25,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Adicionar suporte a loading e anexos
 
-// Adicionar loading como prop na interface ChatAreaProps
 interface ChatAreaProps {
   conversation?: Conversation
   messages: Message[]
@@ -87,12 +85,12 @@ export default function ChatArea({
       if (!groups[date]) {
         groups[date] = []
       }
-      groups[date].push(message)
+      groups[date] = [message, ...groups[date] ]
       return groups
     },
     {} as Record<string, Message[]>,
   )
-
+  
  function formatDate(dateString: string): string {
   const date = parseDateLocal(dateString)
   const today = new Date()
@@ -178,7 +176,9 @@ function parseDateLocal(dateString: string): Date {
 
       {/* Área de mensagens */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {Object.entries(groupedMessages).map(([date, dayMessages]) => (
+        {Object.entries(groupedMessages)
+        .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+          .map(([date, dayMessages]) => (
           <div key={date}>
             {/* Separador de data */}
             <div className="flex justify-center mb-4">

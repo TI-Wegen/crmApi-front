@@ -11,7 +11,7 @@ export function useAgents() {
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
-    pageSize: 20,
+    pageSize: 500,
     total: 0,
   })
 
@@ -34,7 +34,7 @@ export function useAgents() {
           setAgents(response.data)
           setPagination({
             pageNumber: response.pageNumber || 1,
-            pageSize: response.pageSize || 20,
+            pageSize: response.pageSize || 500,
             total: response.total,
           })
         } else if (Array.isArray(response)) {

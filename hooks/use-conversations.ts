@@ -16,7 +16,6 @@ import { signalRService } from "@/services/signalr"
 import { useSignalR } from "@/contexts/signalr-context"
 
 export function useConversations() {
-   const { isAuthenticated } = useAuth()
   const { isConnected: signalRConnected } = useSignalR()
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [conversationDetails, setConversationDetails] = useState<ConversationDetailsDto | null>(null)
@@ -141,22 +140,16 @@ export function useConversations() {
     }
   }, [])
 
-  // Configurar listener do SignalR para novas mensagens APENAS para a conversa ativa
   useEffect(() => {
     if (!signalRConnected  || !selectedConversation) {
       return
     }
 
     const handleNewMessage = (messageWithConvId: MessageWithConversationIdDto) => {
-      console.log("📨 Nova mensagem recebida via SignalR no chat:", messageWithConvId)
-
-      // Verificar se a mensagem é para a conversa atual
       if (messageWithConvId.conversationId !== selectedConversation) {
         console.log("📨 Mensagem não é para a conversa atual, ignorando no chat")
         return
       }
-
-      // Verificar se a mensagem já existe para evitar duplicatas
       if (messageIdsRef.current.has(messageWithConvId.id)) {
         console.log("📨 Mensagem já existe no chat, ignorando duplicata")
         return
@@ -174,8 +167,7 @@ export function useConversations() {
       messageIdsRef.current.add(frontendMessage.id)
 
       setMessages((prev) => {
-        console.log(`📨 Adicionando mensagem ao chat. Total: ${prev.length + 1}`)
-        return [...prev, frontendMessage]
+        return [frontendMessage, ...prev ]
       })
     }
 

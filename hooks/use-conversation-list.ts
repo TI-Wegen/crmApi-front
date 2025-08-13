@@ -127,16 +127,11 @@ const markAsRead = useCallback((conversationId: string) => {
           setorId: user?.setorId,
           ...params,
         })) as ConversationListItemDto[]
-
-        // Ordenar por timestamp
         dtos.sort(
           (a, b) => new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime(),
         )
 
         const frontendConversations = dtos.map(convertDtoToConversation)
-
-
-        // Atualizar ref com IDs das conversas
         conversationIdsRef.current.clear()
         frontendConversations.forEach((conv) => conversationIdsRef.current.add(conv.id))
 

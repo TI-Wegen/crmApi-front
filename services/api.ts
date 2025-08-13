@@ -1,4 +1,3 @@
-import type { ConversationSearchParams } from "@/types/crm"
 import { AuthService } from "./auth"
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
@@ -28,7 +27,6 @@ export class ApiService {
       ...options,
     })
 
-    // Se receber 401, fazer logout automático
     if (response.status === 401) {
       AuthService.removeToken()
       window.location.reload()
@@ -39,7 +37,6 @@ export class ApiService {
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
 
-    // Para respostas 204 No Content
     if (response.status === 204) {
       return {} as T
     }
