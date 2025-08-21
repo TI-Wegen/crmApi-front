@@ -1,4 +1,4 @@
-import type { Message } from "@/types/crm"
+import {Message} from "@/types/messagem";
 
 interface MessageBubbleProps {
   message: Message

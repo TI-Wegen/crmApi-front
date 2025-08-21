@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { ContatoDto } from "@/types/crm"
+import {ContatoDto} from "@/types/contato";
 
 interface ContactFormProps {
   contact?: ContatoDto

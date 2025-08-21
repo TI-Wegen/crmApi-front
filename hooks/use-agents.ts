@@ -1,82 +1,97 @@
-"use client"
+import {useState, useEffect, useCallback} from "react"
+import {AgentService} from "@/services/agent"
+import type {AgenteDto} from "@/types/agente"
+import type {SetorDto} from "@/types/setor"
 
-import { useState, useEffect, useCallback } from "react"
-import type { AgenteDto, SetorDto } from "@/types/crm"
-import { AgentService } from "@/services/agent"
+interface PaginationDefault {
+    pageNumber: number
+    pageSize: number
+    total: number
+}
 
-export function useAgents() {
-  const [agents, setAgents] = useState<AgenteDto[]>([])
-  const [setores, setSetores] = useState<SetorDto[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState({
-    pageNumber: 1,
-    pageSize: 500,
-    total: 0,
-  })
+export interface UseAgentsReturn {
+    agents: AgenteDto[]
+    setores: SetorDto[]
+    loading: boolean
+    error: string | null
+    pagination: PaginationDefault
+    loadAgents: (params?: {
+        pageNumber?: number;
+        pageSize?: number;
+        incluirInativos?: boolean
+    }) => Promise<void>
+}
 
-  /**
-   * Carrega a lista de agentes da API.
-   * Suporta paginação e filtros.
-   * @param params Parâmetros para a busca, como paginação.
-   */
-  const loadAgents = useCallback(
-    async (params?: { pageNumber?: number; pageSize?: number; incluirInativos?: boolean }) => {
-      setLoading(true)
-      setError(null)
+export function useAgents(): UseAgentsReturn {
+    const [agents, setAgents] = useState<AgenteDto[]>([])
+    const [setores, setSetores] = useState<SetorDto[]>([])
+    const [loading, setLoading] = useState<boolean>(true)
+    const [error, setError] = useState<string | null>(null)
+    const [pagination, setPagination] = useState<PaginationDefault>({
+        pageNumber: 1,
+        pageSize: 500,
+        total: 0,
+    })
 
-      try {
-        // Assume uma resposta paginada, similar ao 'useContacts'.
-        const response = (await AgentService.listarAgentes(params)) as any
+    const loadAgents = useCallback(async (params?: {
+            pageNumber?: number;
+            pageSize?: number;
+            incluirInativos?: boolean
+        }): Promise<void> => {
+            setLoading(true)
+            setError(null)
 
-        // Adaptação para o formato de resposta da API (paginado ou array simples)
-        if (response.data && typeof response.total !== "undefined") {
-          setAgents(response.data)
-          setPagination({
-            pageNumber: response.pageNumber || 1,
-            pageSize: response.pageSize || 500,
-            total: response.total,
-          })
-        } else if (Array.isArray(response)) {
-          setAgents(response)
-          setPagination({ pageNumber: 1, pageSize: response.length, total: response.length })
-        } else {
-          throw new Error("Formato de resposta da API de agentes é inesperado.")
+            try {
+                const response: any = await AgentService.listarAgentes(params)
+
+                if (response.data && typeof response.total !== "undefined") {
+                    setAgents(response.data)
+                    setPagination({
+                        pageNumber: response.pageNumber || 1,
+                        pageSize: response.pageSize || 500,
+                        total: response.total,
+                    })
+                } else if (Array.isArray(response)) {
+                    setAgents(response)
+                    setPagination({
+                        pageNumber: 1,
+                        pageSize: response.length,
+                        total: response.length
+                    })
+                } else {
+                    throw new Error("Unexpected API response format for agents.")
+                }
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Error loading agents."
+                setError(message)
+                console.error("Failed to load agents:", err)
+            } finally {
+                setLoading(false)
+            }
+        }, [])
+
+    const loadSetores = useCallback(async (): Promise<SetorDto[]> => {
+        try {
+            const setoresData: SetorDto[] = await AgentService.listarSetores() as SetorDto[]
+            setSetores(setoresData)
+            return setoresData
+        } catch (err: unknown) {
+            console.error("Error loading sectors:", err)
+            throw new Error("Unable to load sectors.")
         }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Erro ao carregar agentes."
-        setError(message)
-        console.error("Falha ao carregar agentes:", err)
-      } finally {
-        setLoading(false)
-      }
-    },
-    [],
-  )
+    }, [])
 
-  const loadSetores = useCallback(async () => {
-    try {
-      const setores = await AgentService.listarSetores()
-        setSetores(setores as SetorDto[])
-        return setores as SetorDto[]
-    } catch (err) {
-      console.error("Erro ao carregar setores:", err)
-      throw new Error("Não foi possível carregar os setores.")
+    useEffect((): void => {
+        loadAgents()
+        loadSetores()
+    }, [loadAgents, loadSetores])
+
+    return {
+        agents,
+        setores,
+        loading,
+        error,
+        pagination,
+        loadAgents,
     }
-  }
-    , [])
-
-  useEffect(() => {
-    loadAgents(),
-    loadSetores()
-  }, [loadAgents, loadSetores])
-
-  return {
-    agents,
-    setores,
-    loading,
-    error,
-    pagination,
-    loadAgents,
-  }
 }

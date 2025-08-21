@@ -1,25 +1,23 @@
+import { ApiService } from "./api"
 import type { LoginRequest, LoginResponse, User } from "@/types/auth"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
 export class AuthService {
   private static readonly TOKEN_KEY = "crm_token"
   private static readonly USER_KEY = "crm_user"
 
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(credentials),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || "Credenciais inválidas")
+    try {
+      const response: LoginResponse = await ApiService.post<LoginResponse>(
+        "/api/auth/login",
+        credentials
+      )
+      return response
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Credenciais inválidas")
+      }
+      throw new Error("Credenciais inválidas")
     }
-    return response.json()
   }
 
   static saveToken(token: string): void {

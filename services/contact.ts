@@ -1,41 +1,36 @@
 import { ApiService } from "./api";
+import type {
+    LoadContactsProps,
+    ContatoDto,
+    CreateContactDto,
+    UpdateContactDto,
+    PaginationState,
+} from "@/types/contato";
 
 export class ContactService {
-      static async criarContato(dados: { nome: string; telefone: string }) {
-        return ApiService.request("/api/contacts", {
-          method: "POST",
-          body: JSON.stringify(dados),
-        })
-      }
-    
-      static async listarContatos(params?: {
-        pageNumber?: number
-        pageSize?: number
-        incluirInativos?: boolean
-      }) {
-        const searchParams = new URLSearchParams()
-        if (params?.pageNumber) searchParams.set("pageNumber", params.pageNumber.toString())
-        if (params?.pageSize) searchParams.set("pageSize", params.pageSize.toString())
-        if (params?.incluirInativos) searchParams.set("incluirInativos", params.incluirInativos.toString())
-    
-        const query = searchParams.toString()
-        return ApiService.request(`/api/contacts${query ? `?${query}` : ""}`)
-      }
-    
-      static async buscarContato(id: string) {
-        return ApiService.request(`/api/contacts/${id}`)
-      }
-    
-      static async atualizarContato(id: string, dados: { nome: string; telefone: string; tags?: string[] }) {
-        return ApiService.request(`/api/contacts/${id}`, {
-          method: "PUT",
-          body: JSON.stringify(dados),
-        })
-      }
-    
-      static async inativarContato(id: string) {
-        return ApiService.request(`/api/contacts/${id}`, {
-          method: "DELETE",
-        })
-      }
+    static async criarContato(dados: CreateContactDto): Promise<ContatoDto> {
+        return ApiService.post<ContatoDto>("/api/contacts", dados);
+    }
+
+    static async listarContatos(params?: LoadContactsProps): Promise<PaginationState> {
+        const searchParams = new URLSearchParams();
+        if (params?.pageNumber) searchParams.set("pageNumber", params.pageNumber.toString());
+        if (params?.pageSize) searchParams.set("pageSize", params.pageSize.toString());
+        if (params?.incluirInativos) searchParams.set("incluirInativos", params.incluirInativos.toString());
+
+        const query = searchParams.toString();
+        return ApiService.get<PaginationState>(`/api/contacts${query ? `?${query}` : ""}`);
+    }
+
+    static async buscarContato(id: string): Promise<ContatoDto> {
+        return ApiService.get<ContatoDto>(`/api/contacts/${id}`);
+    }
+
+    static async atualizarContato(id: string, dados: UpdateContactDto): Promise<ContatoDto> {
+        return ApiService.put<ContatoDto>(`/api/contacts/${id}`, dados);
+    }
+
+    static async inativarContato(id: string): Promise<void> {
+        return ApiService.delete<void>(`/api/contacts/${id}`);
+    }
 }

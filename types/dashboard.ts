@@ -21,8 +21,8 @@ export interface DashboardStats {
     disponiveis: number
   }
   tempoMedio: {
-    primeiraResposta: number // em minutos
-    resolucao: number // em minutos
+    primeiraResposta: number
+    resolucao: number
   }
 }
 

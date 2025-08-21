@@ -1,33 +1,48 @@
-export function formatMessageTimestamp(timestamp: string | Date): string {
-  let messageDate: Date
+export function formatDate(dateString: string): string {
+  const date: Date = parseDateLocal(dateString)
+  const today: Date = new Date()
+  const yesterday: Date = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isToday: boolean = date.toDateString() === today.toDateString()
+  const isYesterday: boolean = date.toDateString() === yesterday.toDateString()
 
-  if (typeof timestamp === "string") {
-    // Remove o 'Z' para evitar que o JS interprete como UTC
-    const normalized = timestamp.endsWith("Z") ? timestamp.slice(0, -1) : timestamp
-    messageDate = new Date(normalized)
-  } else {
-    messageDate = timestamp
+  if (isToday) {
+    return "Hoje"
   }
 
-  const now = new Date()
-
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const messageDay = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate())
-
-  const diffInDays = (today.getTime() - messageDay.getTime()) / (1000 * 3600 * 24)
-
-  if (diffInDays === 0) {
-    return messageDate.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    })
-  } else if (diffInDays === 1) {
+  if (isYesterday) {
     return "Ontem"
-  } else {
-    return messageDate.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
+  }
+
+  return date.toLocaleDateString("pt-BR")
+}
+
+export function parseDateLocal(dateString: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return new Date(dateString + "T00:00:00")
+  }
+  return new Date(dateString)
+}
+
+export function formatMessageTimestamp(timestamp: string): string {
+  const date: Date = new Date(timestamp)
+  const now: Date = new Date()
+
+  const isToday: boolean = date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+
+  if (isToday) {
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit"
     })
   }
+
+  return date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  })
 }

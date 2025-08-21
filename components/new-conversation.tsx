@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useContacts } from "@/hooks/use-contacts"
-import type { ContatoDto } from "@/types/crm"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { useTemplates } from "@/hooks/use-templates"
 import { useConversations } from "@/hooks/use-conversations"
+import {ContatoDto} from "@/types/contato";
 
 interface NewConversationProps {
   onConversationStarted?: (conversationId: string) => void
@@ -18,8 +18,7 @@ interface NewConversationProps {
 
 export default function NewConversation({ onConversationStarted, onCancel }: NewConversationProps) {
   const { contacts, searchContacts } = useContacts()
-  const { startConversation } = useConversations()
-  const {templates,error} = useTemplates()
+  const {templates} = useTemplates()
   const [selectedContact, setSelectedContact] = useState<ContatoDto | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -30,26 +29,26 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
     searchContacts(value)
   }
 
-  const handleStartConversation = async () => {
-    if (!selectedContact) return
-
-    const bodyParameters =  [selectedContact.nome]
-    setLoading(true)
-    try {
-      const conversation = await startConversation(
-        selectedContact.id,
-        selectedTemplate || "",
-        bodyParameters
-      )
-      if (onConversationStarted) {
-        onConversationStarted(conversation.id)
-      }
-    } catch (err) {
-      console.error("Erro ao iniciar conversa:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // const handleStartConversation = async () => {
+  //   if (!selectedContact) return
+  //
+  //   const bodyParameters =  [selectedContact.nome]
+  //   setLoading(true)
+  //   try {
+  //     const conversation = await startConversation(
+  //       selectedContact.id,
+  //       selectedTemplate || "",
+  //       bodyParameters
+  //     )
+  //     if (onConversationStarted) {
+  //       onConversationStarted(conversation.id)
+  //     }
+  //   } catch (err) {
+  //     console.error("Erro ao iniciar conversa:", err)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -143,7 +142,7 @@ export default function NewConversation({ onConversationStarted, onCancel }: New
               Cancelar
             </Button>
             {selectedContact && (
-              <Button onClick={handleStartConversation} disabled={ loading} className="flex-1">
+              <Button disabled={ loading} className="flex-1">
                 {loading ? "Iniciando..." : "Iniciar Conversa"}
               </Button>
             )}

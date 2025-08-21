@@ -9,9 +9,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/contexts/auth-context"
-import SignalRStatus from "./signalr-status"
+import SignalRStatus from "./signalR-status"
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+
+interface NavigationItem {
+  name: string
+  href: string
+  icon?: React.ReactNode
+}
+
+const navigationItems: NavigationItem[] = [
+  {
+    name: "Home",
+    href: "/",
+  },
+]
 
 interface UserHeaderProps {
   signalRConnected?: boolean
@@ -19,9 +32,10 @@ interface UserHeaderProps {
 
 export default function UserHeader({ signalRConnected = false }: UserHeaderProps) {
   const { user, logout } = useAuth()
+
   if (!user) return null
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     if (confirm("Tem certeza que deseja sair?")) {
       logout()
     }
@@ -41,36 +55,17 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
 
         <nav>
           <ul className="flex items-center space-x-4">
-                <li>
-             <Link href="/">
-                <Button variant="ghost" size="sm">
-                  Home
-                </Button>
-              </Link>
-            </li>
-            {/* <li>
-             <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-            </li>
-            <li>
-              <Link href="/conversations">
-                <Button variant="ghost" size="sm">
-                  Conversas
-                </Button>
-              </Link> 
-            </li>
-            <li>
-              <Link href="/contacts">
-                <Button variant="ghost" size="sm">
-                  Contatos
-                </Button>
-              </Link>
-            </li> */}
+            {navigationItems.map((item: NavigationItem) => (
+              <li key={item.href}>
+                <Link href={item.href}>
+                  <Button variant="ghost" size="sm">
+                    {item.icon}
+                    {item.name}
+                  </Button>
+                </Link>
+              </li>
+            ))}
           </ul>
-
         </nav>
 
         <DropdownMenu>

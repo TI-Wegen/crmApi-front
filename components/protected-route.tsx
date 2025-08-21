@@ -1,30 +1,33 @@
 "use client"
 
-import type React from "react"
-
-import { useAuth } from "@/contexts/auth-context"
-import LoginForm from "./login-form"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
-  
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [isAuthenticated, isLoading, router])
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    return <LoginForm />
+    return null
   }
 
   return <>{children}</>

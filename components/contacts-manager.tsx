@@ -1,23 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Search, Edit, Trash2, MessageCircle, Phone } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useContacts } from "@/hooks/use-contacts"
-import { useConversationList } from "@/hooks/use-conversation-list"
-import type { ContatoDto } from "@/types/crm"
+import {useState} from "react"
+import {Phone, Plus, Search} from "lucide-react"
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Card, CardContent} from "@/components/ui/card"
+import {Badge} from "@/components/ui/badge"
+import {useContacts} from "@/hooks/use-contacts"
 import ContactForm from "./contact-form"
+import {ContatoDto} from "@/types/contato";
 
 interface ContactsManagerProps {
   onStartConversation?: (conversationId: string) => void
 }
 
 export default function ContactsManager({ onStartConversation }: ContactsManagerProps) {
-  const { contacts, loading, error, createContact, updateContact, deactivateContact, searchContacts } = useContacts()
-  const { startConversation } = useConversationList()
+  const { contacts, loading, error, createContact, updateContact, searchContacts } = useContacts()
 
   const [showForm, setShowForm] = useState(false)
   const [editingContact, setEditingContact] = useState<ContatoDto | null>(null)
@@ -43,17 +41,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
     }
   }
 
-  const handleStartConversation = async (contact: ContatoDto) => {
-    try {
-      const conversation = await startConversation(contact.id, `Olá ${contact.nome}! Como posso ajudá-lo?`)
-      if (onStartConversation) {
-        onStartConversation(conversation.id)
-      }
-    } catch (err) {
-      console.error("Erro ao iniciar conversa:", err)
-    }
-  }
-
   const handleSearch = (value: string) => {
     setSearchTerm(value)
     searchContacts(value)
@@ -70,7 +57,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Contatos</h2>
@@ -80,7 +66,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
           </Button>
         </div>
 
-        {/* Busca */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -92,7 +77,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
         </div>
       </div>
 
-      {/* Lista de Contatos */}
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="flex justify-center py-8">
@@ -116,7 +100,7 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
                         </div>
                         {contact.tags && contact.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {contact.tags.map((tag, index) => (
+                            {contact.tags.map((tag: any, index: any) => (
                               <Badge key={index} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
@@ -125,34 +109,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
                         )}
                       </div>
                     </div>
-
-                    {/* <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleStartConversation(contact)}
-                        title="Iniciar conversa"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingContact(contact)}
-                        title="Editar contato"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deactivateContact(contact.id)}
-                        title="Excluir contato"
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div> */}
                   </div>
                 </CardContent>
               </Card>
@@ -179,7 +135,6 @@ export default function ContactsManager({ onStartConversation }: ContactsManager
         )}
       </div>
 
-      {/* Formulários */}
       {showForm && (
         <ContactForm onSubmit={handleCreateContact} onCancel={() => setShowForm(false)} title="Novo Contato" />
       )}
