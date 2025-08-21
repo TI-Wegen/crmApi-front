@@ -181,11 +181,11 @@ function parseDateLocal(dateString: string): Date {
           .map(([date, dayMessages]) => (
           <div key={date}>
             {/* Separador de data */}
-            <div className="flex justify-center mb-4">
-              <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
-                {formatDate(date)}
-              </span>
-            </div>
+            {/*<div className="flex justify-center mb-4">*/}
+            {/*  <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">*/}
+            {/*    {formatDate(dayMessages)}*/}
+            {/*  </span>*/}
+            {/*</div>*/}
 
             {/* Mensagens do dia */}
             <div className="space-y-2">
