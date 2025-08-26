@@ -1,4 +1,5 @@
 import {Message} from "@/types/messagem";
+import AudioPlayer from "@/components/ui/audio-player";
 
 interface MessageBubbleProps {
   message: Message
@@ -45,14 +46,8 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                 Documento PDF
               </a>
             ) : isAudio ? (
-                <div className="w-full flex justify-center mt-3">
-                    <audio
-                        controls
-                        className="w-full max-w-lg rounded-2xl shadow-md border border-gray-200 bg-gray-50"
-                    >
-                        <source src={message.anexoUrl} />
-                        Seu navegador não suporta o player de áudio.
-                    </audio>
+                <div className="flex justify-center mt-3">
+                    <AudioPlayer src={message.anexoUrl} />
                 </div>
             ) : isVideo ? (
               <video controls className="w-full mt-1 rounded-md max-h-60">
