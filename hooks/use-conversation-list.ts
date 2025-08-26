@@ -26,11 +26,14 @@ interface UseConversationListReturn {
         pageSize: number
         total: number
     }
+    hasMore: boolean
     loadConversations: (params?: ConversationSearchParams, showLoading?: boolean) => Promise<void>
+    loadMoreConversations: () => Promise<void>
     markAsRead: (conversationId: string) => void
     filterByStatus: (status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => void
     searchConversations: (termoBusca: string) => void
     signalRConnected: boolean
+    refreshConversations: () => Promise<void>
 }
 
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
@@ -57,9 +60,12 @@ export function useConversationList(activeConversationId: string | null, onConve
     const [error, setError] = useState<string | null>(null)
     const [pagination, setPagination] = useState({
         pageNumber: 1,
-        pageSize: 50,
+        pageSize: 20,
         total: 0,
     })
+    const [hasMore, setHasMore] = useState<boolean>(true)
+    const [searchParams, setSearchParams] = useState<ConversationSearchParams>({})
+    const isSearching = useRef(false)
 
     const conversationIdsRef = useRef(new Set<string>())
     const lastUpdateRef = useRef<number>(0)
@@ -75,7 +81,6 @@ export function useConversationList(activeConversationId: string | null, onConve
                 ...(existing || {id: conversationId}),
                 ...updates,
             } as Conversation
-
 
             const filtered = prevList.filter((c) => c.id !== conversationId)
             if (updates.lastMessage || updates.status) {
@@ -118,55 +123,127 @@ export function useConversationList(activeConversationId: string | null, onConve
         setError(null)
 
         try {
-            const dtos = (await ConversationsService.listarConversas({
+            const requestParams = {
                 pageNumber: 1,
-                pageSize: 1000,
+                pageSize: 20,
                 setorId: user?.setorId,
                 ...params,
-            })) as ConversationListItemDto[]
+            }
+
+            const response: any = await ConversationsService.listarConversas(requestParams)
+
+            const dtos = Array.isArray(response.data) ? response.data : response
+            const total = response.total || dtos.length
+            const pageNumber = response.pageNumber || requestParams.pageNumber
+            const pageSize = response.pageSize || requestParams.pageSize
+
             dtos.sort(
-                (a, b) => new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime()
+                (a: ConversationListItemDto, b: ConversationListItemDto) =>
+                    new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime()
             )
 
             const frontendConversations = dtos.map(convertDtoToConversation)
             conversationIdsRef.current.clear()
-            frontendConversations.forEach((conv) => conversationIdsRef.current.add(conv.id))
+            frontendConversations.forEach((conv: any) => conversationIdsRef.current.add(conv.id))
 
             setConversations(frontendConversations)
+            setPagination({
+                pageNumber,
+                pageSize,
+                total
+            })
+            setHasMore(frontendConversations.length === pageSize)
+            setSearchParams(params || {})
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error loading conversations")
             setConversations([])
             conversationIdsRef.current.clear()
+            setHasMore(false)
         } finally {
             if (showLoading) setLoading(false)
         }
     }, [isAuthenticated, user?.setorId])
+
+    const loadMoreConversations = useCallback(async (): Promise<void> => {
+        if (!isAuthenticated || loading || !hasMore) return
+
+        setLoading(true)
+        setError(null)
+
+        try {
+            const nextPage = pagination.pageNumber + 1
+            const requestParams = {
+                pageNumber: nextPage,
+                pageSize: pagination.pageSize,
+                setorId: user?.setorId,
+                ...searchParams,
+            }
+
+            const response: any = await ConversationsService.listarConversas(requestParams)
+
+            const dtos = Array.isArray(response.data) ? response.data : response
+            const total = response.total || (pagination.total + dtos.length)
+            const pageSize = response.pageSize || requestParams.pageSize
+
+            dtos.sort(
+                (a: ConversationListItemDto, b: ConversationListItemDto) =>
+                    new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime()
+            )
+
+            const frontendConversations = dtos.map(convertDtoToConversation)
+
+            setConversations(prev => {
+                const newConversations = [...prev]
+                frontendConversations.forEach((conv: any) => {
+                    if (!conversationIdsRef.current.has(conv.id)) {
+                        conversationIdsRef.current.add(conv.id)
+                        newConversations.push(conv)
+                    }
+                })
+                return newConversations
+            })
+
+            setPagination(prev => ({
+                ...prev,
+                pageNumber: nextPage,
+                total
+            }))
+            setHasMore(frontendConversations.length === pageSize)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error loading more conversations")
+            console.error("Error loading more conversations:", err)
+        } finally {
+            setLoading(false)
+        }
+    }, [isAuthenticated, loading, hasMore, pagination, searchParams, user?.setorId])
+
+    const refreshConversations = useCallback(async (): Promise<void> => {
+        await loadConversations(searchParams, true)
+    }, [loadConversations, searchParams])
 
     const handleStatusChange = useCallback((data: ConversationStatusChange) => {
         updateConversationInList(data.conversationId, () => ({status: data.status}))
     }, [updateConversationInList])
 
     const handleNewMessage = useCallback((message: any) => {
-
-
         if (!message.conversationId) return
 
         if(onConversationUpdate) {
             onConversationUpdate()
         }
 
-        // updateConversationInList(message.conversationId, (prevConv) => {
-        //     const shouldIncrementUnread =
-        //         message.remetenteTipo === "Cliente" &&
-        //         message.conversationId !== activeConversationId
-        //
-        //     return {
-        //         lastMessage: message.texto,
-        //         timestamp: formatMessageTimestamp(),
-        //         unread: shouldIncrementUnread ? (prevConv?.unread || 0) + 1 : prevConv?.unread || 0,
-        //     }
-        // })
-    }, [updateConversationInList, activeConversationId])
+        updateConversationInList(message.conversationId, (prevConv) => {
+            const shouldIncrementUnread =
+                message.remetenteTipo === "Cliente" &&
+                message.conversationId !== activeConversationId
+
+            return {
+                lastMessage: message.texto,
+                timestamp: formatMessageTimestamp(message.timestamp),
+                unread: shouldIncrementUnread ? (prevConv?.unread || 0) + 1 : prevConv?.unread || 0,
+            }
+        })
+    }, [updateConversationInList, activeConversationId, onConversationUpdate])
 
     const handleSignalRError = useCallback((error: string) => {
         console.error("SignalR error:", error)
@@ -198,15 +275,21 @@ export function useConversationList(activeConversationId: string | null, onConve
     })
 
     const filterByStatus = useCallback((status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => {
-        if (status === null) {
-            loadConversations({}, false)
-        } else {
-            loadConversations({status}, false)
-        }
+        const params: ConversationSearchParams = status === null
+            ? {}
+            : { status }
+
+        setSearchParams(params)
+        loadConversations(params, false)
     }, [loadConversations])
 
     const searchConversations = useCallback((termoBusca: string) => {
-        loadConversations({searchTerm: termoBusca} as ConversationSearchParams, false)
+        const params: ConversationSearchParams & { searchTerm?: string } = termoBusca
+            ? { searchTerm: termoBusca }
+            : {}
+
+        setSearchParams(params)
+        loadConversations(params, false)
     }, [loadConversations])
 
     useEffect(() => {
@@ -220,10 +303,13 @@ export function useConversationList(activeConversationId: string | null, onConve
         loading,
         error,
         pagination,
+        hasMore,
         loadConversations,
+        loadMoreConversations,
         markAsRead,
         filterByStatus,
         searchConversations,
         signalRConnected: isSignalRConnected,
+        refreshConversations
     }
 }

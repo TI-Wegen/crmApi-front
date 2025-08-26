@@ -6,7 +6,7 @@ import {Badge} from "@/components/ui/badge"
 
 interface ConversationFiltersProps {
     activeFilter: string
-    onFilterChange: (filter: "all" | "AguardandoNaFila" | "EmAtendimento" | "Resolvida") => void
+    onFilterChange: (filter: string) => void
     conversationCounts?: {
         all: number
         AguardandoNaFila: number
@@ -22,6 +22,13 @@ export default function ConversationFilters({
                                             }: ConversationFiltersProps) {
     const filters = [
         {
+            key: "" as const,
+            label: "Todos",
+            icon: CheckCircle,
+            count: conversationCounts?.all || 0,
+            color: "bg-blue-100 text-green-800",
+        },
+        {
             key: "AguardandoNaFila" as const,
             label: "Na Fila",
             icon: Clock,
@@ -34,7 +41,7 @@ export default function ConversationFilters({
             icon: Users,
             count: conversationCounts?.EmAtendimento || 0,
             color: "bg-blue-100 text-blue-800",
-        }
+        },
     ]
 
     return (
@@ -59,12 +66,6 @@ export default function ConversationFilters({
                         >
                             <Icon className="h-3 w-3"/>
                             <span>{filter.label}</span>
-                            {filter.count > 0 && (
-                                <Badge variant="secondary"
-                                       className={`ml-1 ${filter.color || "bg-gray-100 text-gray-800"}`}>
-                                    {filter.count}
-                                </Badge>
-                            )}
                         </Button>
                     )
                 })}

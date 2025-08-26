@@ -6,7 +6,6 @@ import type {ConversationDetailsDto} from "@/types/conversa"
 import type {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem"
 import {sortMessagesByTimestamp} from "@/utils/sort-messages-by-timestamp"
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
-import {date} from "zod";
 
 export interface UseConversationsReturn {
     selectedConversation: string | null
@@ -18,7 +17,7 @@ export interface UseConversationsReturn {
     selectConversation: (conversationId: string | null) => Promise<void>
     sendMessage: (content: string, file?: File) => Promise<void>
     loadConversation: (conversationId: string) => Promise<void>
-    startConversation: (contactId: string, templateName: string, bodyParameters: string[]) => Promise<{}>
+    startConversation: (contactId: string, templateName: string, bodyParameters: string[]) => Promise<void>
 }
 
 export function useConversations(): UseConversationsReturn {
@@ -91,7 +90,7 @@ export function useConversations(): UseConversationsReturn {
         }
     }, [selectedConversation])
 
-    const startConversation = useCallback(async (contactId: string, templateName: string, bodyParameters: string[]) => {
+    const startConversation = useCallback(async (contactId: string, templateName: string, bodyParameters: string[]): Promise<void> => {
         try {
             const requestData = {
                 contactId,
@@ -100,7 +99,6 @@ export function useConversations(): UseConversationsReturn {
             };
 
             await ConversationsService.iniciarConversaPorTemplate(requestData);
-            return {};
         } catch (err: any) {
             console.error("❌ Erro detalhado ao iniciar conversa:", {
                 message: err.message,
@@ -112,7 +110,7 @@ export function useConversations(): UseConversationsReturn {
             const errorMessage = err.message || "Erro desconhecido ao iniciar conversa";
             throw new Error(`Falha ao iniciar conversa: ${errorMessage}`);
         }
-    }, [loadConversation]);
+    }, [])
 
     useEffect(() => {
         if (!isConnected || !selectedConversation) return
@@ -135,6 +133,8 @@ export function useConversations(): UseConversationsReturn {
             unsubscribe()
         }
     }, [isConnected, selectedConversation])
+
+
 
     const selectConversation = useCallback(async (conversationId: string | null): Promise<void> => {
         if (selectedConversation && isConnected) {

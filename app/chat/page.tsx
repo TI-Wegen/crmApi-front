@@ -52,11 +52,15 @@ const ChatPage = () => {
         searchConversations,
         markAsRead,
         filterByStatus,
+        loadMoreConversations,
+        hasMore,
+        refreshConversations
     } = useConversationList(selectedConversation, () => {
         if (selectedConversation) {
             loadConversation(selectedConversation);
         }
     });
+
 
     const {setores} = useAgents();
 
@@ -202,6 +206,8 @@ const ChatPage = () => {
                                             onSearch={searchConversations}
                                             loading={conversationsLoading}
                                             onSelectConversation={handleSelectAndMarkAsRead}
+                                            hasMore={hasMore}
+                                            onLoadMore={loadMoreConversations}
                                         />
                                     </div>
                                 </div>
