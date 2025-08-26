@@ -22,20 +22,41 @@ export const useConversationSignalREvents = ({
                                                  onNewConversation,
                                                  onNewMessage,
                                                  onStatusChange,
+                                                 onError,
                                              }: UseConversationSignalREventsProps) => {
     const {isConnected} = useSignalRConnectionStatus();
 
     useEffect(() => {
+        const connect = async () => {
+            try {
+                await signalRService.connect();
+            } catch (err) {
+                console.error("Falha ao conectar ao SignalR", err);
+                onError?.(err instanceof Error ? err.message : "Falha ao conectar ao SignalR");
+            }
+        };
 
+        connect();
+    }, []);
+
+    useEffect(() => {
         if (!isConnected) {
             return;
         }
 
-        groups.forEach((groupName) => {
-            signalRService.joinConversationGroup(groupName).catch((err) => {
-                console.error(`Falha ao entrar no grupo ${groupName}`, err);
-            });
-        });
+        const joinGroups = async () => {
+            for (const groupName of groups) {
+                try {
+                    await signalRService.joinConversationGroup(groupName);
+                } catch (err) {
+                    console.error(`Falha ao entrar no grupo ${groupName}`, err);
+                    onError?.(`Falha ao entrar no grupo ${groupName}: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            }
+        };
+
+        joinGroups();
+
         const unsubscribeNewConv = signalRService.on(
             "ReceiveNewConversation",
             onNewConversation
@@ -53,13 +74,14 @@ export const useConversationSignalREvents = ({
             unsubscribeNewConv();
             unsubscribeStatusChange();
             unsubscribeMessage();
+
             groups.forEach((groupName) => {
                 signalRService.leaveConversationGroup(groupName).catch((err) => {
                     console.error(`Falha ao sair do grupo ${groupName}`, err);
                 });
             });
         };
-    }, [isConnected, onNewConversation, onNewMessage, onStatusChange]);
+    }, [isConnected, ...groups, onNewConversation, onNewMessage, onStatusChange]);
 
     return isConnected;
 };

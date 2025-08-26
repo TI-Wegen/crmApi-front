@@ -50,7 +50,7 @@ function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
     }
 }
 
-export function useConversationList(activeConversationId: string | null): UseConversationListReturn {
+export function useConversationList(activeConversationId: string | null, onConversationUpdate?: () => void): UseConversationListReturn {
     const {isAuthenticated, user} = useAuth()
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [loading, setLoading] = useState(false)
@@ -75,6 +75,7 @@ export function useConversationList(activeConversationId: string | null): UseCon
                 ...(existing || {id: conversationId}),
                 ...updates,
             } as Conversation
+
 
             const filtered = prevList.filter((c) => c.id !== conversationId)
             if (updates.lastMessage || updates.status) {
@@ -146,19 +147,25 @@ export function useConversationList(activeConversationId: string | null): UseCon
     }, [updateConversationInList])
 
     const handleNewMessage = useCallback((message: any) => {
+
+
         if (!message.conversationId) return
 
-        updateConversationInList(message.conversationId, (prevConv) => {
-            const shouldIncrementUnread =
-                message.remetenteTipo === "Cliente" &&
-                message.conversationId !== activeConversationId
+        if(onConversationUpdate) {
+            onConversationUpdate()
+        }
 
-            return {
-                lastMessage: message.texto,
-                timestamp: formatMessageTimestamp(message.timestamp),
-                unread: shouldIncrementUnread ? (prevConv?.unread || 0) + 1 : prevConv?.unread || 0,
-            }
-        })
+        // updateConversationInList(message.conversationId, (prevConv) => {
+        //     const shouldIncrementUnread =
+        //         message.remetenteTipo === "Cliente" &&
+        //         message.conversationId !== activeConversationId
+        //
+        //     return {
+        //         lastMessage: message.texto,
+        //         timestamp: formatMessageTimestamp(),
+        //         unread: shouldIncrementUnread ? (prevConv?.unread || 0) + 1 : prevConv?.unread || 0,
+        //     }
+        // })
     }, [updateConversationInList, activeConversationId])
 
     const handleSignalRError = useCallback((error: string) => {
@@ -190,8 +197,12 @@ export function useConversationList(activeConversationId: string | null): UseCon
         onError: handleSignalRError,
     })
 
-    const filterByStatus = useCallback((status: Conversation["status"]) => {
-        loadConversations({status}, false)
+    const filterByStatus = useCallback((status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => {
+        if (status === null) {
+            loadConversations({}, false)
+        } else {
+            loadConversations({status}, false)
+        }
     }, [loadConversations])
 
     const searchConversations = useCallback((termoBusca: string) => {

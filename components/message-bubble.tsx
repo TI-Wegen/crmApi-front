@@ -45,10 +45,15 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                 Documento PDF
               </a>
             ) : isAudio ? (
-              <audio controls className="w-full mt-1">
-                <source src={message.anexoUrl} />
-                Seu navegador não suporta o player de áudio.
-              </audio>
+                <div className="w-full flex justify-center mt-3">
+                    <audio
+                        controls
+                        className="w-full max-w-lg rounded-2xl shadow-md border border-gray-200 bg-gray-50"
+                    >
+                        <source src={message.anexoUrl} />
+                        Seu navegador não suporta o player de áudio.
+                    </audio>
+                </div>
             ) : isVideo ? (
               <video controls className="w-full mt-1 rounded-md max-h-60">
                 <source src={message.anexoUrl} />

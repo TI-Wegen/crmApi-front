@@ -7,31 +7,18 @@ export const messageMapper = {
         const date = new Date(dto.timestamp)
 
         let formattedTimestamp: string
-        let adjustedDate: string
-
-        if (dto.remetenteTipo === "Cliente") {
-            adjustedDate = date.toISOString()
-            formattedTimestamp = date.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-            })
-        } else {
-            formattedTimestamp = formatMessageTimestamp(dto.timestamp)
-
-            const normalized = dto.timestamp.endsWith("Z")
-                ? dto.timestamp.slice(0, -1)
-                : dto.timestamp
-
-            adjustedDate = new Date(normalized).toISOString()
-        }
+        formattedTimestamp = date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        })
 
         return {
             id: dto.id,
             content: dto.texto,
             timestamp: formattedTimestamp,
             isFromClient: dto.remetenteTipo === "Cliente",
-            date: adjustedDate,
+            date: new Date(formattedTimestamp).toString(),
             anexoUrl: dto.anexoUrl,
         }
     },

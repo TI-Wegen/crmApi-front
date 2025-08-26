@@ -1,17 +1,11 @@
 "use client"
 
-import { LogOut, User, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import {LogOut, User} from "lucide-react"
+import {Button} from "@/components/ui/button"
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu"
 import SignalRStatus from "./signalR-status"
 import Link from "next/link"
-import { useAuth } from "@/hooks/use-auth"
+import {useAuth} from "@/hooks/use-auth"
 
 interface NavigationItem {
   name: string
@@ -82,15 +76,6 @@ export default function UserHeader({ signalRConnected = false }: UserHeaderProps
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>
-              <User className="h-4 w-4 mr-2" />
-              Meu Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="h-4 w-4 mr-2" />
-              Configurações
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600">
               <LogOut className="h-4 w-4 mr-2" />
               Sair

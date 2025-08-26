@@ -111,11 +111,12 @@ export default function ConversationItem({
         >
             <div className="flex items-center space-x-3">
                 <div className="relative flex-shrink-0">
+                    {[null, "", undefined].includes(conversation?.avatar) ? (
                     <img
-                        src={conversation.avatar || "/placeholder.svg"}
-                        alt={conversation.contatoNome}
+                        src={conversation.avatar}
                         className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                    />
+                    />) : (<User/>)
+                    }
 
                     <div className="flex items-center gap-1 mt-1">
                         {conversation.sessaoWhatsappAtiva ? (

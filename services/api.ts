@@ -6,7 +6,6 @@ export class ApiService {
     private static getAuthHeaders(): Record<string, string> {
         const token = AuthService.getToken()
         const headers: Record<string, string> = {
-            "Content-Type": "application/json",
         }
 
         if (token) {
@@ -23,16 +22,47 @@ export class ApiService {
             throw new Error("Sessão expirada. Faça login novamente.")
         }
 
+        if (response.status === 204 || response.status === 202) {
+            const text = await response.text();
+            if (!text) {
+                return undefined as unknown as T;
+            }
+            try {
+                return JSON.parse(text);
+            } catch {
+                return undefined as unknown as T;
+            }
+        }
+
         if (!response.ok) {
-            throw new Error(`API Error: ${response.status} ${response.statusText}`)
+            let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+            try {
+                const errorText = await response.text();
+                if (errorText) {
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                    } catch {
+                        errorMessage = errorText || errorMessage;
+                    }
+                }
+            } catch (e) {
+            }
+            throw new Error(errorMessage);
         }
 
-        if (response.status === 204) {
-            return {} as T
+        const text = await response.text();
+        if (!text) {
+            throw new Error("Resposta vazia do servidor");
         }
 
-        return response.json()
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error("Resposta inválida do servidor: " + text.substring(0, 100));
+        }
     }
+
 
     public static async get<T>(endpoint: string): Promise<T> {
         const url = `${API_BASE_URL}${endpoint}`
@@ -52,11 +82,13 @@ export class ApiService {
 
         const response = await fetch(url, {
             method: "POST",
-            headers: isFormData
-                ? this.getAuthHeaders()
-                : {...this.getAuthHeaders(), "Content-Type": "application/json"},
+            headers: {
+                ...this.getAuthHeaders(),
+                ...(isFormData ? {} : { "Content-Type": "application/json" })
+            },
             body: isFormData ? data : JSON.stringify(data),
         })
+
 
         return this.handleResponse<T>(response)
     }

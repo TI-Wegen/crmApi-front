@@ -40,7 +40,9 @@ export default function MessageInput({
                 setSelectedFile(null)
             }
         } else {
-            if (!conversationId || !selectedTemplateId) return
+            if (!conversationId || !selectedTemplateId) {
+                return
+            }
 
             setLoading(true)
             try {
