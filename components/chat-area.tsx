@@ -7,6 +7,7 @@ import {formatDate} from "@/utils/date-formatter"
 import {Conversation} from "@/types/conversa";
 import {Message} from "@/types/messagem";
 import {SetorDto} from "@/types/setor";
+import {User} from "lucide-react";
 
 interface ChatAreaProps {
     conversation?: Conversation
@@ -66,11 +67,12 @@ export default function ChatArea({
             <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        <img
-                            src={conversation.avatar || "/placeholder.svg"}
-                            alt={conversation.contatoNome}
-                            className="w-10 h-10 rounded-full object-cover"
-                        />
+                        {[null, "", undefined].includes(conversation?.avatar) ? (
+                            <img
+                                src={conversation.avatar}
+                                className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                            />) : (<User/>)
+                        }
                         <div>
                             <h2 className="font-medium text-gray-900">{conversation.contatoNome}</h2>
                             <p className="text-sm text-green-500">Online</p>
