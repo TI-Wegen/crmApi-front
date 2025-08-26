@@ -83,8 +83,8 @@ const ChatPage = () => {
         selectConversation(conversationId);
     }, [selectConversation]);
 
-    const handleFilterChange = useCallback((filter: ConversationFilter): void => {
-        setConversationFilter(filter);
+    const handleFilterChange = useCallback((filter: string): void => {
+        setConversationFilter(filter as ConversationFilter);
         filterByStatus(filter === "all" ? null : (filter as "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null));
     }, [filterByStatus]);
 

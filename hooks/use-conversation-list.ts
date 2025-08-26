@@ -56,6 +56,7 @@ function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
 export function useConversationList(activeConversationId: string | null, onConversationUpdate?: () => void): UseConversationListReturn {
     const {isAuthenticated, user} = useAuth()
     const [conversations, setConversations] = useState<Conversation[]>([])
+    const [allConversations, setAllConversations] = useState<Conversation[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [pagination, setPagination] = useState({
@@ -64,8 +65,7 @@ export function useConversationList(activeConversationId: string | null, onConve
         total: 0,
     })
     const [hasMore, setHasMore] = useState<boolean>(true)
-    const [searchParams, setSearchParams] = useState<ConversationSearchParams>({})
-    const isSearching = useRef(false)
+    const [currentFilter, setCurrentFilter] = useState<ConversationSearchParams>({})
 
     const conversationIdsRef = useRef(new Set<string>())
     const lastUpdateRef = useRef<number>(0)
@@ -94,10 +94,35 @@ export function useConversationList(activeConversationId: string | null, onConve
             }
             return [updatedConversation, ...filtered]
         })
+
+        setAllConversations(prev => {
+            const existing = prev.find((c) => c.id === conversationId)
+            const updates = getUpdatedConversation(existing)
+
+            if (!existing && Object.keys(updates).length === 0) return prev
+
+            const updatedConversation = {
+                ...(existing || {id: conversationId}),
+                ...updates,
+            } as Conversation
+
+            const filtered = prev.filter((c) => c.id !== conversationId)
+            if (updates.lastMessage || updates.status) {
+                return [updatedConversation, ...filtered]
+            }
+            const originalIndex = prev.findIndex((c) => c.id === conversationId)
+            if (originalIndex >= 0) {
+                const newList = [...filtered]
+                newList.splice(originalIndex, 0, updatedConversation)
+                return newList
+            }
+            return [updatedConversation, ...filtered]
+        })
     }, [])
 
     const markAsRead = useCallback((conversationId: string) => {
         setConversations((prev) => prev.map((conv) => (conv.id === conversationId ? {...conv, unread: 0} : conv)))
+        setAllConversations((prev) => prev.map((conv) => (conv.id === conversationId ? {...conv, unread: 0} : conv)))
     }, [])
 
     const addOrUpdateConversation = useCallback((newConversation: Conversation) => {
@@ -110,11 +135,18 @@ export function useConversationList(activeConversationId: string | null, onConve
             conversationIdsRef.current.add(newConversation.id)
             return [newConversation, ...filtered]
         })
+        
+        setAllConversations((prev) => {
+            const filtered = prev.filter((c) => c.id !== newConversation.id)
+            conversationIdsRef.current.add(newConversation.id)
+            return [newConversation, ...filtered]
+        })
     }, [])
 
     const loadConversations = useCallback(async (params?: ConversationSearchParams, showLoading = true) => {
         if (!isAuthenticated) {
             setConversations([])
+            setAllConversations([])
             conversationIdsRef.current.clear()
             return
         }
@@ -146,6 +178,7 @@ export function useConversationList(activeConversationId: string | null, onConve
             conversationIdsRef.current.clear()
             frontendConversations.forEach((conv: any) => conversationIdsRef.current.add(conv.id))
 
+            setAllConversations(frontendConversations)
             setConversations(frontendConversations)
             setPagination({
                 pageNumber,
@@ -153,10 +186,11 @@ export function useConversationList(activeConversationId: string | null, onConve
                 total
             })
             setHasMore(frontendConversations.length === pageSize)
-            setSearchParams(params || {})
+            setCurrentFilter(params || {})
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error loading conversations")
             setConversations([])
+            setAllConversations([])
             conversationIdsRef.current.clear()
             setHasMore(false)
         } finally {
@@ -176,7 +210,7 @@ export function useConversationList(activeConversationId: string | null, onConve
                 pageNumber: nextPage,
                 pageSize: pagination.pageSize,
                 setorId: user?.setorId,
-                ...searchParams,
+                ...currentFilter,
             }
 
             const response: any = await ConversationsService.listarConversas(requestParams)
@@ -192,6 +226,17 @@ export function useConversationList(activeConversationId: string | null, onConve
 
             const frontendConversations = dtos.map(convertDtoToConversation)
 
+            setAllConversations(prev => {
+                const newConversations = [...prev]
+                frontendConversations.forEach((conv: any) => {
+                    if (!conversationIdsRef.current.has(conv.id)) {
+                        conversationIdsRef.current.add(conv.id)
+                        newConversations.push(conv)
+                    }
+                })
+                return newConversations
+            })
+            
             setConversations(prev => {
                 const newConversations = [...prev]
                 frontendConversations.forEach((conv: any) => {
@@ -215,11 +260,11 @@ export function useConversationList(activeConversationId: string | null, onConve
         } finally {
             setLoading(false)
         }
-    }, [isAuthenticated, loading, hasMore, pagination, searchParams, user?.setorId])
+    }, [isAuthenticated, loading, hasMore, pagination, currentFilter, user?.setorId])
 
     const refreshConversations = useCallback(async (): Promise<void> => {
-        await loadConversations(searchParams, true)
-    }, [loadConversations, searchParams])
+        await loadConversations(currentFilter, true)
+    }, [loadConversations, currentFilter])
 
     const handleStatusChange = useCallback((data: ConversationStatusChange) => {
         updateConversationInList(data.conversationId, () => ({status: data.status}))
@@ -228,7 +273,7 @@ export function useConversationList(activeConversationId: string | null, onConve
     const handleNewMessage = useCallback((message: any) => {
         if (!message.conversationId) return
 
-        if(onConversationUpdate) {
+        if (onConversationUpdate) {
             onConversationUpdate()
         }
 
@@ -277,20 +322,38 @@ export function useConversationList(activeConversationId: string | null, onConve
     const filterByStatus = useCallback((status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => {
         const params: ConversationSearchParams = status === null
             ? {}
-            : { status }
+            : {status}
 
-        setSearchParams(params)
+        setCurrentFilter(params)
         loadConversations(params, false)
     }, [loadConversations])
 
     const searchConversations = useCallback((termoBusca: string) => {
-        const params: ConversationSearchParams & { searchTerm?: string } = termoBusca
-            ? { searchTerm: termoBusca }
-            : {}
+        if (!termoBusca) {
+            let filtered = [...allConversations]
 
-        setSearchParams(params)
-        loadConversations(params, false)
-    }, [loadConversations])
+            if (currentFilter.status) {
+                filtered = filtered.filter(conversation => conversation.status === currentFilter.status)
+            }
+            
+            setConversations(filtered)
+            return
+        }
+
+        let filteredConversations = allConversations.filter(conversation => {
+            if (currentFilter.status && conversation.status !== currentFilter.status) {
+                return false
+            }
+
+            const searchLower = termoBusca.toLowerCase()
+            return (
+                conversation.contatoNome.toLowerCase().includes(searchLower) ||
+                (conversation.lastMessage && conversation.lastMessage.toLowerCase().includes(searchLower))
+            )
+        })
+
+        setConversations(filteredConversations)
+    }, [allConversations, currentFilter])
 
     useEffect(() => {
         if (isAuthenticated) {
