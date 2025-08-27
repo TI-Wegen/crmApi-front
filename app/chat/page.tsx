@@ -42,7 +42,8 @@ const ChatPage = () => {
         selectConversation,
         sendMessage,
         startConversation,
-        loadConversation
+        loadConversation,
+        resolveConversation
     } = useConversations();
 
     const {
@@ -54,7 +55,6 @@ const ChatPage = () => {
         filterByStatus,
         loadMoreConversations,
         hasMore,
-        refreshConversations
     } = useConversationList(selectedConversation, () => {
         if (selectedConversation) {
             loadConversation(selectedConversation);
@@ -88,6 +88,15 @@ const ChatPage = () => {
         filterByStatus(filter === "all" ? null : (filter as "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null));
     }, [filterByStatus]);
 
+    const handleEndConversation = async (atendimentoId: string) => {
+        if (!atendimentoId) return;
+        try {
+            await resolveConversation(atendimentoId)
+            selectConversation(null)
+        } catch (error) {
+            console.error("Erro ao encerrar atendimento:", error);
+        }
+    };
 
     const conversationCounts = useMemo((): ConversationCounts => ({
         all: conversations.length,
@@ -227,7 +236,8 @@ const ChatPage = () => {
                             loading={chatLoading}
                             onConversationStarted={handleStartConversation}
                             setores={setores}
-                        />
+                            onEndConversation={handleEndConversation}
+                            />
                     </div>
                 </div>
             </div>

@@ -70,4 +70,8 @@ export class ConversationsService {
         return ApiService.post(`/api/Conversations/${dados.contactId}/senTemplate`, dados)
     }
 
+    static async resolverConversa(atendimentoID: string) {
+        return ApiService.patch(`/api/conversations/${atendimentoID}/resolver`, null)
+    }
+
 }

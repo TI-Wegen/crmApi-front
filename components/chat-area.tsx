@@ -7,13 +7,21 @@ import {formatDate} from "@/utils/date-formatter"
 import {Conversation} from "@/types/conversa";
 import {Message} from "@/types/messagem";
 import {SetorDto} from "@/types/setor";
-import {User} from "lucide-react";
+import {ArrowRightLeft, LogOut, MoreVertical, User} from "lucide-react";
+import {
+    DropdownMenu, DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {Button} from "@/components/ui/button";
 
 interface ChatAreaProps {
     conversation?: Conversation
     messages: Message[]
     onSendMessage: (content: string, file?: File) => void
     loading?: boolean
+    onEndConversation: (atendimentoId: string) => Promise<void>
     onConversationStarted?: (conversationId: string) => void
     setores: SetorDto[]
 }
@@ -23,10 +31,19 @@ export default function ChatArea({
                                      messages,
                                      onSendMessage,
                                      loading,
+                                     onEndConversation,
                                      onConversationStarted,
                                      setores,
                                  }: ChatAreaProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+    const handleEnd = async (): Promise<void> => {
+        if (!conversation) return
+        setIsSubmitting(true)
+        await onEndConversation(conversation.atendimentoId)
+        setIsSubmitting(false)
+    }
 
     const scrollToBottom = (): void => {
         messagesEndRef.current?.scrollIntoView({behavior: "auto"})
@@ -77,6 +94,25 @@ export default function ChatArea({
                             <h2 className="font-medium text-gray-900">{conversation.contatoNome}</h2>
                             <p className="text-sm text-green-500">Online</p>
                         </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" disabled={isSubmitting}>
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onSelect={handleEnd}
+                                    className="text-red-500 focus:text-red-500 focus:bg-red-50"
+                                >
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Encerrar Atendimento</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </div>

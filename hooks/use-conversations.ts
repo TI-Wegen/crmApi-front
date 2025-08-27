@@ -18,6 +18,7 @@ export interface UseConversationsReturn {
     sendMessage: (content: string, file?: File) => Promise<void>
     loadConversation: (conversationId: string) => Promise<void>
     startConversation: (contactId: string, templateName: string, bodyParameters: string[]) => Promise<void>
+    resolveConversation: (id: string) => Promise<void>
 }
 
 export function useConversations(): UseConversationsReturn {
@@ -112,6 +113,10 @@ export function useConversations(): UseConversationsReturn {
         }
     }, [])
 
+    const resolveConversation = (id: string) => {
+        return ConversationsService.resolverConversa(id)
+    }
+
     useEffect(() => {
         if (!isConnected || !selectedConversation) return
 
@@ -133,8 +138,6 @@ export function useConversations(): UseConversationsReturn {
             unsubscribe()
         }
     }, [isConnected, selectedConversation])
-
-
 
     const selectConversation = useCallback(async (conversationId: string | null): Promise<void> => {
         if (selectedConversation && isConnected) {
@@ -166,6 +169,7 @@ export function useConversations(): UseConversationsReturn {
         selectConversation,
         sendMessage,
         loadConversation,
-        startConversation
+        startConversation,
+        resolveConversation
     }
 }
