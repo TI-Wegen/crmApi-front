@@ -64,6 +64,16 @@ const ChatPage = () => {
 
     const {setores} = useAgents();
 
+    const handleEndConversation = async (atendimentoId: string) => {
+        if (!atendimentoId) return;
+        try {
+            await resolveConversation(atendimentoId)
+            selectConversation(null)
+        } catch (error) {
+            console.error("Erro ao encerrar atendimento:", error);
+        }
+    };
+
     const handleSelectAndMarkAsRead = useCallback((conversationId: string): void => {
         markAsRead(conversationId);
         selectConversation(conversationId);
@@ -87,16 +97,6 @@ const ChatPage = () => {
         setConversationFilter(filter as ConversationFilter);
         filterByStatus(filter === "all" ? null : (filter as "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null));
     }, [filterByStatus]);
-
-    const handleEndConversation = async (atendimentoId: string) => {
-        if (!atendimentoId) return;
-        try {
-            await resolveConversation(atendimentoId)
-            selectConversation(null)
-        } catch (error) {
-            console.error("Erro ao encerrar atendimento:", error);
-        }
-    };
 
     const conversationCounts = useMemo((): ConversationCounts => ({
         all: conversations.length,
