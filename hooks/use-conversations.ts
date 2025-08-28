@@ -4,7 +4,7 @@ import {signalRService} from "@/services/signalr"
 import {messageMapper} from "@/mappers/message-mapper"
 import type {ConversationDetailsDto} from "@/types/conversa"
 import type {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem"
-import {sortMessagesByTimestamp} from "@/utils/sort-messages-by-timestamp"
+import {sortMessagesByDate, sortMessagesByTimestamp} from "@/utils/sort-messages-by-date"
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
 
 export interface UseConversationsReturn {
@@ -18,7 +18,7 @@ export interface UseConversationsReturn {
     sendMessage: (content: string, file?: File) => Promise<void>
     loadConversation: (conversationId: string) => Promise<void>
     startConversation: (contactId: string, templateName: string, bodyParameters: string[]) => Promise<void>
-    resolveConversation: (id: string) => Promise<void>
+    resolveConversation: (id: string) => Promise<unknown>
 }
 
 export function useConversations(): UseConversationsReturn {
@@ -83,7 +83,7 @@ export function useConversations(): UseConversationsReturn {
             loadConversation(selectedConversation)
             if (!messageIdsRef.current.has(frontendMessage.id)) {
                 messageIdsRef.current.add(frontendMessage.id)
-                setMessages((prev: Message[]): Message[] => sortMessagesByTimestamp([{...frontendMessage}, ...prev]))
+                setMessages((prev: Message[]): Message[] => sortMessagesByDate([{...frontendMessage}, ...prev]))
             }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error sending message")
@@ -128,7 +128,7 @@ export function useConversations(): UseConversationsReturn {
             if (!messageIdsRef.current.has(frontendMessage.id)) {
                 messageIdsRef.current.add(frontendMessage.id)
                 setMessages((prev: Message[]): Message[] =>
-                    sortMessagesByTimestamp([...prev, frontendMessage])
+                    sortMessagesByDate([...prev, frontendMessage])
                 )
             }
         }
