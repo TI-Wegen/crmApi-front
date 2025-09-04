@@ -1,3 +1,4 @@
+// components/chat-area.tsx
 "use client"
 
 import {useEffect, useRef, useState} from "react"
@@ -7,17 +8,23 @@ import {formatDate} from "@/utils/date-formatter"
 import {Conversation} from "@/types/conversa";
 import {Message} from "@/types/messagem";
 import {SetorDto} from "@/types/setor";
-import {ArrowRightLeft, LogOut, MoreVertical, User} from "lucide-react";
+import {LogOut, MoreVertical, Tag, User} from "lucide-react";
 import {
-    DropdownMenu, DropdownMenuContent,
+    DropdownMenu,
+    DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {Button} from "@/components/ui/button";
+import {useTags} from "@/hooks/use-tags";
+import {useContacts} from "@/hooks/use-contacts";
 
 interface ChatAreaProps {
-    conversation?: Conversation
+    conversation?: Conversation | undefined
     messages: Message[]
     onSendMessage: (content: string, file?: File) => void
     loading?: boolean
@@ -38,11 +45,20 @@ export default function ChatArea({
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
+    const {tags, loading: tagsLoading} = useTags();
+    const {addTagInContact} = useContacts();
+
     const handleEnd = async (): Promise<void> => {
         if (!conversation) return
         setIsSubmitting(true)
         await onEndConversation(conversation.atendimentoId)
         setIsSubmitting(false)
+    }
+
+    const handleTagContact = async (tagId: string) => {
+        if (!conversation?.id) return;
+        addTagInContact(conversation?.id, tagId)
+
     }
 
     const scrollToBottom = (): void => {
@@ -84,31 +100,68 @@ export default function ChatArea({
             <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        {[null, "", undefined].includes(conversation?.avatar) ? (
+                        {conversation?.avatar && !["", "null", "undefined"].includes(conversation.avatar) ? (
                             <img
                                 src={conversation.avatar}
+                                alt={conversation.contatoNome}
                                 className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                            />) : (<User/>)
-                        }
+                            />
+                        ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                <User className="text-gray-500"/>
+                            </div>
+                        )}
                         <div>
                             <h2 className="font-medium text-gray-900">{conversation.contatoNome}</h2>
-                            <p className="text-sm text-green-500">Online</p>
+                            <small className="font-medium text-gray-600">{conversation.contatoTelefone}</small>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" disabled={isSubmitting}>
-                                    <MoreVertical className="h-4 w-4" />
+                                    <MoreVertical className="h-4 w-4"/>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuSeparator />
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <Tag className="mr-2 h-4 w-4"/>
+                                        <span>Marcar esse contato como</span>
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubContent>
+                                        {tagsLoading ? (
+                                            <DropdownMenuItem disabled>
+                                                Carregando tags...
+                                            </DropdownMenuItem>
+                                        ) : tags.length === 0 ? (
+                                            <DropdownMenuItem disabled>
+                                                Nenhuma tag disponível
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            tags.map((tag) => (
+                                                <DropdownMenuItem
+                                                    key={tag.id}
+                                                    onClick={() => handleTagContact(tag.id)}
+                                                    disabled={conversation.tagId === tag.id}
+                                                >
+                                                    {conversation.tagId === tag.id && (
+                                                        <span className="mr-2">✓</span>
+                                                    )}
+                                                    {tag.nome}
+                                                </DropdownMenuItem>
+                                            ))
+                                        )}
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+
+                                <DropdownMenuSeparator/>
+
                                 <DropdownMenuItem
                                     onSelect={handleEnd}
                                     className="text-red-500 focus:text-red-500 focus:bg-red-50"
                                 >
-                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <LogOut className="mr-2 h-4 w-4"/>
                                     <span>Encerrar Atendimento</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -125,9 +178,9 @@ export default function ChatArea({
                     .map(([date, dayMessages]) => (
                         <div key={date}>
                             <div className="flex justify-center mb-4">
-                <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
-                  {formatDate(date)}
-                </span>
+                                <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
+                                    {formatDate(date)}
+                                </span>
                             </div>
 
                             <div className="space-y-2">
@@ -152,7 +205,7 @@ export default function ChatArea({
 
             <MessageInput
                 onSendMessage={onSendMessage}
-                sessaoAtiva={conversation.sessaoWhatsappAtiva}
+                sessaoAtiva={true}
                 onConversationStarted={onConversationStarted}
                 conversationId={conversation.contatoId}
                 contactName={conversation.contatoNome}

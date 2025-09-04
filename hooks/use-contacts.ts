@@ -19,6 +19,7 @@ export interface UseContactsReturn {
     deactivateContact: (id: string) => Promise<void>
     searchContacts: (searchTerm: string) => void
     refreshContacts: () => Promise<void>
+    addTagInContact: (contactId: string, tagId: string) => Promise<void>
 }
 
 export function useContacts(): UseContactsReturn {
@@ -95,7 +96,7 @@ export function useContacts(): UseContactsReturn {
 
     const refreshContacts = useCallback(async (): Promise<void> => {
         await loadContacts()
-    }, [loadContacts, searchTerm])
+    }, [loadContacts])
 
     const createContact = useCallback(async (data: CreateContactDto): Promise<ContatoDto> => {
         setLoading(true)
@@ -120,9 +121,13 @@ export function useContacts(): UseContactsReturn {
         setError(null)
 
         try {
+            // Atualiza o contato no backend
             await ContactService.atualizarContato(id, data)
 
+            // Busca o contato atualizado
             const updatedContact: ContatoDto = await ContactService.buscarContato(id) as ContatoDto
+            
+            // Atualiza o estado local
             setContacts((prev: ContatoDto[]): ContatoDto[] =>
                 prev.map((contact: ContatoDto): ContatoDto => (contact.id === id ? updatedContact : contact))
             )
@@ -136,6 +141,22 @@ export function useContacts(): UseContactsReturn {
             setLoading(false)
         }
     }, [])
+
+    const addTagInContact = useCallback(async (contactId: string, tagId: string): Promise<void> => {
+        setLoading(true)
+        setError(null)
+
+        try {
+            await ContactService.adicionarTag(contactId, tagId)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error updating contact")
+            console.error("Error updating contact:", err)
+            throw err
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
 
     const deactivateContact = useCallback(async (id: string): Promise<void> => {
         setLoading(true)
@@ -172,11 +193,14 @@ export function useContacts(): UseContactsReturn {
         try {
             const filteredContacts = contacts.filter((contact: ContatoDto): boolean => {
                 const searchLower = searchTerm.toLowerCase()
-                return (
+                const tagMatch = contact.tags &&
+                    typeof contact.tags === 'string' &&
+                    contact.tags.toLowerCase().includes(searchLower);
+
+                return <boolean>(
                     contact.nome.toLowerCase().includes(searchLower) ||
                     contact.telefone.includes(searchTerm) ||
-                    (contact.tags && contact.tags.some(tag => tag.toLowerCase().includes(searchLower)))
-                    || false
+                    tagMatch
                 )
             })
 
@@ -191,7 +215,6 @@ export function useContacts(): UseContactsReturn {
             setLoading(false)
         }
     }, [loadContacts, contacts])
-
 
     useEffect((): void => {
         loadContacts()
@@ -209,6 +232,7 @@ export function useContacts(): UseContactsReturn {
         updateContact,
         deactivateContact,
         searchContacts,
-        refreshContacts
+        refreshContacts,
+        addTagInContact
     }
 }

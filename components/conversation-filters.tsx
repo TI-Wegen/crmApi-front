@@ -1,48 +1,41 @@
 "use client"
 
-import {Filter, Users, Clock, CheckCircle} from "lucide-react"
-import {Button} from "@/components/ui/button"
-import {Badge} from "@/components/ui/badge"
+import { Filter } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"
+import {Tag} from "@/types/tag";
 
 interface ConversationFiltersProps {
     activeFilter: string
     onFilterChange: (filter: string) => void
     conversationCounts?: {
         all: number
-        AguardandoNaFila: number
-        EmAtendimento: number
-        Resolvida: number
+        [key: string]: number
     }
+    tags?: Tag[]
 }
 
 export default function ConversationFilters({
-                                                activeFilter,
-                                                onFilterChange,
-                                                conversationCounts,
-                                            }: ConversationFiltersProps) {
-    const filters = [
-        {
-            key: "" as const,
-            label: "Todos",
-            icon: CheckCircle,
-            count: conversationCounts?.all || 0,
-            color: "bg-blue-100 text-green-800",
-        },
-        {
-            key: "AguardandoNaFila" as const,
-            label: "Na Fila",
-            icon: Clock,
-            count: conversationCounts?.AguardandoNaFila || 0,
-            color: "bg-yellow-100 text-yellow-800",
-        },
-        {
-            key: "EmAtendimento" as const,
-            label: "Em Andamento",
-            icon: Users,
-            count: conversationCounts?.EmAtendimento || 0,
-            color: "bg-blue-100 text-blue-800",
-        },
+    activeFilter,
+    onFilterChange,
+    conversationCounts,
+    tags = [],
+}: ConversationFiltersProps) {
+    const tagFilters = [
+        { key: "", label: "Todos", count: conversationCounts?.all},
+        ...tags.map(tag => ({
+            key: tag.id,
+            label: tag.nome,
+            count: conversationCounts?.[tag.id] || 0,
+        }))
     ]
+
+    const activeFilterLabel = tagFilters.find(f => f.key === activeFilter)?.label || "Todos"
 
     return (
         <div className="p-4 border-b border-gray-200 bg-gray-50">
@@ -51,25 +44,33 @@ export default function ConversationFilters({
                 <span className="text-sm font-medium text-gray-700">Filtros</span>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-                {filters.map((filter) => {
-                    const Icon = filter.icon
-                    const isActive = activeFilter === filter.key
-
-                    return (
-                        <Button
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                        <span>{activeFilterLabel}</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[200px]" align="start">
+                    {tagFilters.map((filter) => (
+                        <DropdownMenuCheckboxItem
                             key={filter.key}
-                            variant={isActive ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => onFilterChange(filter.key)}
-                            className={`flex items-center space-x-2 ${isActive ? "" : "hover:bg-gray-100"}`}
+                            checked={activeFilter === filter.key}
+                            onCheckedChange={(checked) => {
+                                if (checked) {
+                                    onFilterChange(filter.key)
+                                }
+                            }}
                         >
-                            <Icon className="h-3 w-3"/>
-                            <span>{filter.label}</span>
-                        </Button>
-                    )
-                })}
-            </div>
+                            <div className="flex justify-between w-full">
+                                <span>{filter.label}</span>
+                                <span className="ml-2 bg-gray-200 text-gray-700 rounded-full px-2 py-1 text-xs">
+                                    {filter.count}
+                                </span>
+                            </div>
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     )
 }

@@ -3,7 +3,7 @@ export interface ContatoDto {
   atendimentoId: string;
   nome: string;
   telefone: string;
-  tags?: string[];
+  tags?: string;
   ativo: boolean;
   timestamp: string;
   atualizadoEm?: string;
@@ -19,7 +19,6 @@ export interface CreateContactDto {
 export interface UpdateContactDto {
     nome: string
     telefone: string
-    tags?: string[]
 }
 
 export interface PaginationState {

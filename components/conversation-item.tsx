@@ -1,13 +1,13 @@
 "use client";
 
-import {CheckCircle, Clock, Clock3, User, XCircle} from "lucide-react";
+import {User, XCircle, CheckCircle} from "lucide-react";
 import {Badge} from "@/components/ui/badge";
 import {differenceInHours, formatDistanceToNowStrict, isBefore, parseISO,} from "date-fns";
 import {ptBR} from "date-fns/locale/pt-BR";
 import {Conversation} from "@/types/conversa";
 
 interface ConversationItemProps {
-    conversation: Conversation & { agentName?: string };
+    conversation: Conversation;
     isSelected: boolean;
     onClick: () => void;
 }
@@ -17,89 +17,6 @@ export default function ConversationItem({
                                              isSelected,
                                              onClick,
                                          }: ConversationItemProps) {
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "AguardandoNaFila":
-                return <Clock className="h-3 w-3 text-yellow-600"/>;
-            case "EmAndamento":
-                return <User className="h-3 w-3 text-blue-600"/>;
-            case "Resolvida":
-                return <CheckCircle className="h-3 w-3 text-green-600"/>;
-            default:
-                return null;
-        }
-    };
-
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "AguardandoNaFila":
-                return "bg-yellow-100 text-yellow-800";
-            case "EmAndamento":
-                return "bg-blue-100 text-blue-800";
-            case "Resolvida":
-                return "bg-green-100 text-green-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case "AguardandoNaFila":
-                return "Na Fila";
-            case "EmAndamento":
-                return "Em Andamento";
-            case "Resolvida":
-                return "Resolvida";
-            default:
-                return status;
-        }
-    };
-
-    const getSessionStatusInfo = (expiraEm: string | Date | null) => {
-        if (!expiraEm)
-            return {color: "text-gray-400", title: "Sem dados de expiração"};
-
-        const expiracao =
-            typeof expiraEm === "string" ? parseISO(expiraEm) : expiraEm;
-        const now = new Date();
-        const diff = differenceInHours(expiracao, now);
-
-        if (isBefore(expiracao, now)) {
-            return {color: "text-gray-400", title: "Sessão expirada"};
-        }
-
-        if (diff <= 2)
-            return {
-                color: "text-red-500",
-                title: `Expira em ${formatDistanceToNowStrict(expiracao, {
-                    locale: ptBR,
-                })}`,
-            };
-        if (diff <= 6)
-            return {
-                color: "text-orange-500",
-                title: `Expira em ${formatDistanceToNowStrict(expiracao, {
-                    locale: ptBR,
-                })}`,
-            };
-        if (diff <= 12)
-            return {
-                color: "text-yellow-500",
-                title: `Expira em ${formatDistanceToNowStrict(expiracao, {
-                    locale: ptBR,
-                })}`,
-            };
-
-        return {
-            color: "text-green-500",
-            title: `Expira em ${formatDistanceToNowStrict(expiracao, {
-                locale: ptBR,
-            })}`,
-        };
-    };
-
     return (
         <div
             className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 active:bg-gray-100 ${
@@ -111,26 +28,39 @@ export default function ConversationItem({
         >
             <div className="flex items-center space-x-3">
                 <div className="relative flex-shrink-0">
-                    {[null, "", undefined].includes(conversation?.avatar) ? (
-                    <img
-                        src={conversation.avatar}
-                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                    />) : (<User/>)
-                    }
+                    {conversation?.avatar && !["", "null", "undefined"].includes(conversation.avatar) ? (
+                        <img
+                            src={conversation.avatar}
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
+                        />
+                    ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                            <User className="text-gray-500"/>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-1 mt-1">
                         {conversation.sessaoWhatsappAtiva ? (
                             (() => {
-                                const {color, title} = getSessionStatusInfo(
-                                    conversation.sessaoWhatsappExpiraEm
+                                const expiraEm = conversation.sessaoWhatsappExpiraEm;
+                                const isExpired = expiraEm && isBefore(
+                                    typeof expiraEm === "string" ? parseISO(expiraEm) : expiraEm,
+                                    new Date()
                                 );
-                                return <div title={title} className={`text-xs ${color}`}>
-                                    <Clock3 size={18} className={color}/>
-                                </div>
+
+                                return isExpired ? (
+                                    <div title="Atendimento finalizado" className="text-gray-400">
+                                        <CheckCircle size={18} />
+                                    </div>
+                                ) : (
+                                    <div title="Atendimento em andamento" className="text-green-500">
+                                        <User size={18} />
+                                    </div>
+                                );
                             })()
                         ) : (
                             <div
-                                title={`Sessão desativada. Última: ${conversation.sessaoWhatsappExpiraEm}`}
+                                title={`Sessão desativada.`}
                             >
                                 <XCircle size={18} className="text-gray-400"/>
                             </div>
@@ -175,15 +105,19 @@ export default function ConversationItem({
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <Badge
-                                variant="secondary"
-                                className={`text-xs ${getStatusColor(conversation.status)}`}
-                            >
-                <span className="flex items-center space-x-1">
-                  {getStatusIcon(conversation.status)}
-                    <span>{getStatusLabel(conversation.status)}</span>
-                </span>
-                            </Badge>
+                            {conversation.tagName && conversation.tagColor ? (
+                                <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                    style={{
+                                        backgroundColor: `${conversation.tagColor}20`,
+                                        color: conversation.tagColor,
+                                        border: `1px solid ${conversation.tagColor}`
+                                    }}
+                                >
+                                    <span>{conversation.tagName}</span>
+                                </Badge>
+                            ) : (<div></div>)}
                         </div>
 
                         {conversation.agentName && (
@@ -192,9 +126,9 @@ export default function ConversationItem({
                                     isSelected ? "text-blue-600" : "text-gray-500"
                                 }`}
                             >
-                <User className="h-3 w-3 mr-1"/>
+                                <User className="h-3 w-3 mr-1"/>
                                 {conversation.agentName}
-              </span>
+                            </span>
                         )}
                     </div>
                 </div>

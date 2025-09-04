@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const protectedRoutes = ['/chat']
+const protectedRoutes = ['/chat', '/tags']
 const publicRoutes = ['/', '/login']
 
 export function middleware(request: NextRequest) {
@@ -27,11 +27,6 @@ export function middleware(request: NextRequest) {
 
   if (publicRoutes.includes(pathname) && isAuthenticated && pathname !== '/login') {
     return NextResponse.redirect(new URL('/chat', request.url))
-  }
-
-  if (!protectedRoutes.some(route => pathname.startsWith(route)) &&
-      !publicRoutes.includes(pathname)) {
-    return new NextResponse('Page Not Found', { status: 404 })
   }
 
   return NextResponse.next()

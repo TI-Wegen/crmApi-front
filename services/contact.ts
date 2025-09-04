@@ -1,4 +1,4 @@
-import { ApiService } from "./api";
+import {ApiService} from "./api";
 import type {
     LoadContactsProps,
     ContatoDto,
@@ -32,5 +32,9 @@ export class ContactService {
 
     static async inativarContato(id: string): Promise<void> {
         return ApiService.delete<void>(`/api/contacts/${id}`);
+    }
+
+    static async adicionarTag(contactId: string, tagId: string) {
+        return await ApiService.post(`/api/Conversations/${contactId}/AddTag`, {tagId});
     }
 }

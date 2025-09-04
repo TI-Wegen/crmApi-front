@@ -17,6 +17,7 @@ export class ConversationsService {
         if (params?.status) searchParams.set("status", params.status.toString())
         if (params?.agenteId) searchParams.set("agenteId", params.agenteId.toString())
         if (params?.setorId) searchParams.set("setorId", params.setorId.toString())
+        if (params?.tagId) searchParams.set("tagId", params.tagId.toString())
 
         const query = searchParams.toString()
         return ApiService.get<ConversationListItemDto[]>(`/api/conversations${query ? `?${query}` : ""}`)

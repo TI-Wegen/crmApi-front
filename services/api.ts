@@ -5,8 +5,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost
 export class ApiService {
     private static getAuthHeaders(): Record<string, string> {
         const token = AuthService.getToken()
-        const headers: Record<string, string> = {
-        }
+        const headers: Record<string, string> = {}
 
         if (token) {
             headers.Authorization = `Bearer ${token}`
@@ -84,7 +83,7 @@ export class ApiService {
             method: "POST",
             headers: {
                 ...this.getAuthHeaders(),
-                ...(isFormData ? {} : { "Content-Type": "application/json" })
+                ...(isFormData ? {} : {"Content-Type": "application/json"})
             },
             body: isFormData ? data : JSON.stringify(data),
         })

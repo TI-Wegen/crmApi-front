@@ -12,7 +12,7 @@ import {ContatoDto} from "@/types/contato";
 
 interface ContactFormProps {
   contact?: ContatoDto
-  onSubmit: (dados: { nome: string; telefone: string; tags?: string[] }) => Promise<void>
+  onSubmit: (dados: { nome: string; telefone: string;}) => Promise<void>
   onCancel: () => void
   title: string
 }
@@ -21,7 +21,6 @@ export default function ContactForm({ contact, onSubmit, onCancel, title }: Cont
   const [formData, setFormData] = useState({
     nome: "",
     telefone: "",
-    tags: "",
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -31,7 +30,6 @@ export default function ContactForm({ contact, onSubmit, onCancel, title }: Cont
       setFormData({
         nome: contact.nome,
         telefone: contact.telefone,
-        tags: contact.tags?.join(", ") || "",
       })
     }
   }, [contact])
@@ -60,15 +58,9 @@ export default function ContactForm({ contact, onSubmit, onCancel, title }: Cont
 
     setLoading(true)
     try {
-      const tags = formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0)
-
       await onSubmit({
         nome: formData.nome.trim(),
         telefone: formData.telefone.trim(),
-        tags: tags.length > 0 ? tags : undefined,
       })
     } catch (err) {
       console.error("Erro ao salvar contato:", err)
@@ -110,16 +102,6 @@ export default function ContactForm({ contact, onSubmit, onCancel, title }: Cont
                 className={errors.telefone ? "border-red-500" : ""}
               />
               {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
-              <Input
-                id="tags"
-                value={formData.tags}
-                onChange={(e) => setFormData((prev) => ({ ...prev, tags: e.target.value }))}
-                placeholder="cliente-vip, interessado, etc."
-              />
             </div>
 
             <div className="flex space-x-2 pt-4">

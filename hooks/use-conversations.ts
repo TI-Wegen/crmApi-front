@@ -96,7 +96,7 @@ export function useConversations(): UseConversationsReturn {
             const requestData = {
                 contactId,
                 templateName,
-                bodyParameters: bodyParameters || []
+                bodyParameters: bodyParameters
             };
 
             await ConversationsService.iniciarConversaPorTemplate(requestData);

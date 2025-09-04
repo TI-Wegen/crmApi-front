@@ -50,6 +50,10 @@ function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
         sessaoWhatsappExpiraEm: dto.sessaoWhatsappExpiraEm || null,
         unread: 0,
         contatoId: dto.contatoId,
+        tagId: dto.tagId,
+        tagName: dto.tagName,
+        tagColor: dto.tagColor,
+        contatoTelefone: dto.contatoTelefone,
     }
 }
 
@@ -311,6 +315,10 @@ export function useConversationList(activeConversationId: string | null, onConve
                 sessaoWhatsappExpiraEm: null,
                 unread: 0,
                 contatoId: summaryDto.contatoId,
+                tagId: summaryDto.tagId,
+                tagName: summaryDto.tagName,
+                tagColor: summaryDto.tagColor,
+                contatoTelefone: summaryDto.contatoTelefone,
             };
             addOrUpdateConversation(newConversation);
         },
