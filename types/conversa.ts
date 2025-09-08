@@ -1,7 +1,6 @@
 import {MessageDto} from "@/types/messagem";
 import {ContatoDto} from "@/types/contato";
 import {AgenteDto} from "@/types/agente";
-import {undefined} from "zod";
 
 export interface ConversationDto {
     id: string;
@@ -44,6 +43,12 @@ export interface ConversationDetailsDto extends ConversationDto {
     agente?: AgenteDto;
     mensagens: MessageDto[];
     atendimentoId?: string;
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
+    totalCount: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
 }
 
 export interface ConversationSummaryDto {

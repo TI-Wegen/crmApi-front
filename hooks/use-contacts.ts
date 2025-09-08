@@ -121,13 +121,10 @@ export function useContacts(): UseContactsReturn {
         setError(null)
 
         try {
-            // Atualiza o contato no backend
             await ContactService.atualizarContato(id, data)
 
-            // Busca o contato atualizado
             const updatedContact: ContatoDto = await ContactService.buscarContato(id) as ContatoDto
-            
-            // Atualiza o estado local
+
             setContacts((prev: ContatoDto[]): ContatoDto[] =>
                 prev.map((contact: ContatoDto): ContatoDto => (contact.id === id ? updatedContact : contact))
             )
@@ -156,7 +153,6 @@ export function useContacts(): UseContactsReturn {
             setLoading(false)
         }
     }, [])
-
 
     const deactivateContact = useCallback(async (id: string): Promise<void> => {
         setLoading(true)

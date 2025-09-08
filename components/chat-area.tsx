@@ -1,14 +1,13 @@
-// components/chat-area.tsx
 "use client"
 
-import {useEffect, useRef, useState} from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import MessageBubble from "./message-bubble"
 import MessageInput from "./message-input"
 import {formatDate} from "@/utils/date-formatter"
 import {Conversation} from "@/types/conversa";
 import {Message} from "@/types/messagem";
 import {SetorDto} from "@/types/setor";
-import {LogOut, MoreVertical, Tag, User} from "lucide-react";
+import {LogOut, MoreVertical, Tag, User, ArrowDown} from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,6 +30,10 @@ interface ChatAreaProps {
     onEndConversation: (atendimentoId: string) => Promise<void>
     onConversationStarted?: (conversationId: string) => void
     setores: SetorDto[]
+    onLoadMoreMessages?: () => void
+    hasMoreMessages?: boolean
+    hasTagsMarks?: boolean
+    isFirstPage?: boolean
 }
 
 export default function ChatArea({
@@ -41,12 +44,63 @@ export default function ChatArea({
                                      onEndConversation,
                                      onConversationStarted,
                                      setores,
+                                     onLoadMoreMessages,
+                                     hasMoreMessages = true,
+                                     hasTagsMarks = true,
+                                     isFirstPage = true
                                  }: ChatAreaProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const messagesContainerRef = useRef<HTMLDivElement>(null)
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+    const [isFetching, setIsFetching] = useState<boolean>(false)
+    const [showScrollButton, setShowScrollButton] = useState<boolean>(false)
+    const scrollPositionRef = useRef<number>(0);
 
     const {tags, loading: tagsLoading} = useTags();
     const {addTagInContact} = useContacts();
+
+    const handleScroll = useCallback(() => {
+        if (!messagesContainerRef.current || !onLoadMoreMessages || !hasMoreMessages || isFetching) return;
+
+        const {scrollTop} = messagesContainerRef.current;
+
+        if (scrollTop < 50) {
+
+            scrollPositionRef.current = messagesContainerRef.current.scrollHeight - messagesContainerRef.current.scrollTop;
+            setIsFetching(true);
+            onLoadMoreMessages();
+        }
+
+        const container = messagesContainerRef.current;
+        const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+        setShowScrollButton(!atBottom);
+    }, [onLoadMoreMessages, hasMoreMessages, isFetching]);
+
+    useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+            return () => container.removeEventListener('scroll', handleScroll);
+        }
+    }, [handleScroll]);
+
+
+    useEffect(() => {
+        if (isFetching && messages.length > 0) {
+
+            if (messagesContainerRef.current) {
+                const newScrollTop = messagesContainerRef.current.scrollHeight - scrollPositionRef.current;
+                messagesContainerRef.current.scrollTop = newScrollTop;
+                setIsFetching(false);
+            }
+        }
+    }, [messages, isFetching]);
+
+    useEffect((): void => {
+        if (isFirstPage) {
+            scrollToBottom();
+        }
+    }, [messages, conversation, isFirstPage]);
 
     const handleEnd = async (): Promise<void> => {
         if (!conversation) return
@@ -58,16 +112,16 @@ export default function ChatArea({
     const handleTagContact = async (tagId: string) => {
         if (!conversation?.id) return;
         addTagInContact(conversation?.id, tagId)
-
     }
 
     const scrollToBottom = (): void => {
-        messagesEndRef.current?.scrollIntoView({behavior: "auto"})
+        messagesEndRef.current?.scrollIntoView({behavior: "smooth"})
     }
 
-    useEffect((): void => {
-        scrollToBottom()
-    }, [messages, conversation])
+    const handleScrollToBottom = (): void => {
+        scrollToBottom();
+        setShowScrollButton(false);
+    }
 
     if (!conversation) {
         return (
@@ -117,60 +171,89 @@ export default function ChatArea({
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" disabled={isSubmitting}>
-                                    <MoreVertical className="h-4 w-4"/>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>
-                                        <Tag className="mr-2 h-4 w-4"/>
-                                        <span>Marcar esse contato como</span>
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuSubContent>
-                                        {tagsLoading ? (
-                                            <DropdownMenuItem disabled>
-                                                Carregando tags...
-                                            </DropdownMenuItem>
-                                        ) : tags.length === 0 ? (
-                                            <DropdownMenuItem disabled>
-                                                Nenhuma tag disponível
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            tags.map((tag) => (
-                                                <DropdownMenuItem
-                                                    key={tag.id}
-                                                    onClick={() => handleTagContact(tag.id)}
-                                                    disabled={conversation.tagId === tag.id}
-                                                >
-                                                    {conversation.tagId === tag.id && (
-                                                        <span className="mr-2">✓</span>
-                                                    )}
-                                                    {tag.nome}
-                                                </DropdownMenuItem>
-                                            ))
-                                        )}
-                                    </DropdownMenuSubContent>
-                                </DropdownMenuSub>
+                        {
+                            hasTagsMarks && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" disabled={isSubmitting}>
+                                            <MoreVertical className="h-4 w-4"/>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuSub>
+                                            <DropdownMenuSubTrigger>
+                                                <Tag className="mr-2 h-4 w-4"/>
+                                                <span>Marcar essa conversa como</span>
+                                            </DropdownMenuSubTrigger>
+                                            <DropdownMenuSubContent>
+                                                {tagsLoading ? (
+                                                    <DropdownMenuItem disabled>
+                                                        Carregando tags...
+                                                    </DropdownMenuItem>
+                                                ) : tags.length === 0 ? (
+                                                    <DropdownMenuItem disabled>
+                                                        Nenhuma tag disponível
+                                                    </DropdownMenuItem>
+                                                ) : (
+                                                    tags.map((tag) => (
+                                                        <DropdownMenuItem
+                                                            key={tag.id}
+                                                            onClick={() => handleTagContact(tag.id)}
+                                                            disabled={conversation.tagId === tag.id}
+                                                        >
+                                                            {conversation.tagId === tag.id && (
+                                                                <span className="mr-2">✓</span>
+                                                            )}
+                                                            {tag.nome}
+                                                        </DropdownMenuItem>
+                                                    ))
+                                                )}
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuSub>
 
-                                <DropdownMenuSeparator/>
+                                        <DropdownMenuSeparator/>
 
-                                <DropdownMenuItem
-                                    onSelect={handleEnd}
-                                    className="text-red-500 focus:text-red-500 focus:bg-red-50"
-                                >
-                                    <LogOut className="mr-2 h-4 w-4"/>
-                                    <span>Encerrar Atendimento</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                        <DropdownMenuItem
+                                            onSelect={handleEnd}
+                                            className="text-red-500 focus:text-red-500 focus:bg-red-50"
+                                        >
+                                            <LogOut className="mr-2 h-4 w-4"/>
+                                            <span>Encerrar Atendimento</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )
+                        }
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            {showScrollButton && (
+                <div className="absolute bottom-24 right-6 z-10">
+                    <Button
+                        size="sm"
+                        className="rounded-full p-2 shadow-lg bg-blue-500 hover:bg-blue-600"
+                        onClick={handleScrollToBottom}
+                    >
+                        <ArrowDown className="h-5 w-5 text-white" />
+                    </Button>
+                </div>
+            )}
+
+            <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 relative"
+                onScroll={handleScroll}
+            >
+                {isFetching && hasMoreMessages && (
+                    <div className="flex justify-center py-2">
+                        <div className="flex items-center space-x-2 text-gray-500">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                            <span className="text-sm">Carregando mensagens anteriores...</span>
+                        </div>
+                    </div>
+                )}
+
                 {Object.entries(groupedMessages)
                     .sort(([dateA], [dateB]): number =>
                         new Date(dateA).getTime() - new Date(dateB).getTime()

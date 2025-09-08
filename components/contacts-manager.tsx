@@ -1,5 +1,4 @@
-// Modificar o arquivo /home/lucas/WebstormProjects/crmApi-front/components/contacts-manager.tsx
-
+// components/contacts-manager.tsx
 "use client"
 
 import {useState, useCallback, useRef, useEffect} from "react"
@@ -58,6 +57,12 @@ export default function ContactsManager({onStartConversation}: ContactsManagerPr
     const handleSearch = (value: string) => {
         setSearchTerm(value)
         searchContacts(value)
+    }
+
+    const handleContactClick = (contactId: string) => {
+        if (onStartConversation) {
+            onStartConversation(contactId)
+        }
     }
 
     const loadMoreIfIntersecting = useCallback((node: HTMLDivElement | null) => {
@@ -123,6 +128,8 @@ export default function ContactsManager({onStartConversation}: ContactsManagerPr
                             <div
                                 key={contact.id}
                                 ref={index === contacts.length - 1 ? loadMoreIfIntersecting : null}
+                                onClick={() => handleContactClick(contact.id)} // Adicionando o handler de clique
+                                className="cursor-pointer" // Adicionando cursor de pointer para indicar que é clicável
                             >
                                 <Card className="hover:shadow-md transition-shadow">
                                     <CardContent className="p-4">
@@ -139,9 +146,11 @@ export default function ContactsManager({onStartConversation}: ContactsManagerPr
                                                         <Phone className="h-3 w-3"/>
                                                         <span>{contact.telefone}</span>
                                                     </div>
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        {contact.tags}
-                                                    </Badge>
+                                                    {contact.tags && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {contact.tags}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

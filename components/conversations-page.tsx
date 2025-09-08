@@ -31,7 +31,9 @@ const ConversationsPage = () => {
         sendMessage,
         startConversation,
         loadConversation,
-        resolveConversation
+        resolveConversation,
+        loadMoreMessages,
+        hasMoreMessages
     } = useConversations();
 
     const {
@@ -191,6 +193,9 @@ const ConversationsPage = () => {
                             onConversationStarted={handleStartConversation}
                             setores={setores}
                             onEndConversation={handleEndConversation}
+                            onLoadMoreMessages={loadMoreMessages}
+                            hasMoreMessages={hasMoreMessages}
+                            isFirstPage={(conversationDetails?.currentPage ?? false) === 1}
                         />
                     </div>
                 </div>

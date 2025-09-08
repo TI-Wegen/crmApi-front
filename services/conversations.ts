@@ -23,8 +23,21 @@ export class ConversationsService {
         return ApiService.get<ConversationListItemDto[]>(`/api/conversations${query ? `?${query}` : ""}`)
     }
 
-    static async buscarConversa(id: string): Promise<ConversationDetailsDto> {
-        return ApiService.get<ConversationDetailsDto>(`/api/conversations/${id}`)
+    static async buscarConversaPorContato(contactId: string, pageNumber: number): Promise<ConversationListItemDto[]> {
+        const searchParams = new URLSearchParams()
+        if (pageNumber) searchParams.set("pageNumber", pageNumber.toString())
+
+        const query = searchParams.toString()
+        return ApiService.get<ConversationListItemDto[]>(`/api/conversations/${contactId}/Contact${query ? `?${query}` : ""}`)
+    }
+
+    static async buscarConversa(id: string, pageNumber: number = 1, pageSize: number = 20): Promise<ConversationDetailsDto> {
+        const searchParams = new URLSearchParams()
+        searchParams.set("pageNumber", pageNumber.toString())
+        searchParams.set("pageSize", pageSize.toString())
+
+        const query = searchParams.toString()
+        return ApiService.get<ConversationDetailsDto>(`/api/conversations/${id}${query ? `?${query}` : ""}`)
     }
 
     static async adicionarMensagem(conversaId: string, formData: FormData): Promise<any> {

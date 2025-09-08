@@ -1,38 +1,38 @@
 "use client";
 
-import {useCallback, useState} from "react";
+import {useCallback, useMemo} from "react";
 import {Toaster} from "sonner";
 import ChatArea from "@/components/chat-area";
 import ContactsManager from "@/components/contacts-manager";
 import {useConversations} from "@/hooks/use-conversations";
 import {useAgents} from "@/hooks/use-agents";
+import {Conversation} from "@/types/conversa";
 
 const ContactsPage = () => {
-    const [selectedContact, setSelectedContact] = useState<string | null>(null);
-
     const {
         conversationDetails,
         messages,
         loading: chatLoading,
         error: chatError,
-        selectConversation,
         sendMessage,
         startConversation,
-        loadConversation,
-        resolveConversation
+        resolveConversation,
+        loadMoreMessages,
+        hasMoreMessages,
+        loadConversationByContact,
+        selectConversation
     } = useConversations();
 
     const {setores} = useAgents();
 
-    const handleNewConversationFromContacts = useCallback((conversationId: string): void => {
-        setSelectedContact(conversationId);
-        selectConversation(conversationId);
-    }, [selectConversation]);
+    const handleNewConversationFromContacts = useCallback(async (contactId: string): Promise<void> => {
+        await loadConversationByContact(contactId, 1);
+    }, [loadConversationByContact]);
 
-    const handleStartConversation = useCallback(async (conversationId: string): Promise<void> => {
+    const handleStartConversation = useCallback(async (contactId: string): Promise<void> => {
         const name = conversationDetails?.contatoNome || "";
         const id = conversationDetails?.id || "";
-        await startConversation(conversationId, "template", [name]).then(_ => selectConversation(id));
+        await startConversation(contactId, "template", [name]).then(_ => selectConversation(id));
     }, [conversationDetails, startConversation]);
 
     const handleEndConversation = async (atendimentoId: string) => {
@@ -45,25 +45,29 @@ const ContactsPage = () => {
         }
     };
 
-    const formattedConversation = conversationDetails ? {
-        id: conversationDetails.id,
-        contatoNome: conversationDetails.contatoNome || "",
-        lastMessage: conversationDetails.ultimaMensagem || "",
-        timestamp: conversationDetails.ultimaMensagemEm
-            ? new Date(conversationDetails.ultimaMensagemEm).toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-            : "",
-        unread: 0,
-        avatar: "/placeholder.svg?height=40&width=40",
-        status: conversationDetails.status,
-        atendimentoId: conversationDetails.atendimentoId || "",
-        sessaoWhatsappAtiva: conversationDetails.sessaoWhatsappAtiva,
-        sessaoWhatsappExpiraEm: conversationDetails.sessaoWhatsappExpiraEm,
-        contatoId: conversationDetails.contatoId || "",
-        agenteId: conversationDetails.agenteId || "",
-    } : undefined;
+    const formattedConversation = useMemo(() => {
+        if (!conversationDetails) return undefined;
+
+        return {
+            id: conversationDetails.id,
+            contatoNome: conversationDetails.contatoNome || "",
+            lastMessage: conversationDetails.ultimaMensagem || "",
+            timestamp: conversationDetails.ultimaMensagemEm
+                ? new Date(conversationDetails.ultimaMensagemEm).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })
+                : "",
+            unread: 0,
+            avatar: "/placeholder.svg?height=40&width=40",
+            status: conversationDetails.status,
+            atendimentoId: conversationDetails.atendimentoId || "",
+            sessaoWhatsappAtiva: conversationDetails.sessaoWhatsappAtiva,
+            sessaoWhatsappExpiraEm: conversationDetails.sessaoWhatsappExpiraEm,
+            contatoId: conversationDetails.contatoId || "",
+            agenteId: conversationDetails.agenteId || "",
+        } as Conversation;
+    }, [conversationDetails]);
 
     if (chatError) {
         return (
@@ -107,6 +111,10 @@ const ContactsPage = () => {
                             onConversationStarted={handleStartConversation}
                             setores={setores}
                             onEndConversation={handleEndConversation}
+                            onLoadMoreMessages={loadMoreMessages}
+                            hasTagsMarks={false}
+                            hasMoreMessages={hasMoreMessages}
+                            isFirstPage={(conversationDetails?.currentPage ?? 1) === 1}
                         />
                     </div>
                 </div>

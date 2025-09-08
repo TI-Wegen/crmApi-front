@@ -18,7 +18,10 @@ export interface UseConversationsReturn {
     sendMessage: (content: string, file?: File) => Promise<void>
     loadConversation: (conversationId: string) => Promise<void>
     startConversation: (contactId: string, templateName: string, bodyParameters: string[]) => Promise<void>
+    loadConversationByContact: (contactId: string, page: number) => Promise<void>
     resolveConversation: (id: string) => Promise<unknown>
+    loadMoreMessages: () => Promise<void>
+    hasMoreMessages: boolean
 }
 
 export function useConversations(): UseConversationsReturn {
@@ -29,27 +32,41 @@ export function useConversations(): UseConversationsReturn {
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const messageIdsRef = useRef<Set<string>>(new Set<string>())
+    const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true)
 
-    const loadConversation = useCallback(async (conversationId: string): Promise<void> => {
-        setLoading(true)
+    const loadConversation = useCallback(async (conversationId: string, page: number = 1): Promise<void> => {
+        setLoading(page === 1)
         setError(null)
-        messageIdsRef.current.clear()
 
         try {
-            const details: ConversationDetailsDto = await ConversationsService.buscarConversa(conversationId) as ConversationDetailsDto
+            if (page === 1) {
+                messageIdsRef.current.clear()
+            }
+
+            const details: ConversationDetailsDto = await ConversationsService.buscarConversa(
+                conversationId,
+                page
+            ) as ConversationDetailsDto
 
             setConversationDetails(details)
-            const frontendMessages: Message[] = details.mensagens.map(messageMapper.fromDto)
-            const sortedMessages: Message[] = sortMessagesByTimestamp(frontendMessages.filter((msg, index, self) =>
-                index === self.findIndex(m => m.id === msg.id)
-            ))
-            setMessages(sortedMessages)
 
-            sortedMessages.forEach((msg: Message): void => {
+            setHasMoreMessages(details.hasNextPage)
+
+            const frontendMessages: Message[] = details.mensagens.map(messageMapper.fromDto)
+
+            const uniqueMessages = frontendMessages.filter(msg => !messageIdsRef.current.has(msg.id))
+
+            uniqueMessages.forEach((msg: Message): void => {
                 messageIdsRef.current.add(msg.id)
             })
 
-            if (isConnected) {
+            setMessages(prevMessages =>
+                page === 1
+                    ? sortMessagesByTimestamp(uniqueMessages)
+                    : [...prevMessages, ...sortMessagesByTimestamp(uniqueMessages)]
+            )
+
+            if (page === 1 && isConnected) {
                 try {
                     await signalRService.joinConversationGroup(conversationId)
                 } catch (signalRError: unknown) {
@@ -60,9 +77,83 @@ export function useConversations(): UseConversationsReturn {
             setError(err instanceof Error ? err.message : "Error loading conversation")
             console.error("❌ Error loading conversation:", err)
         } finally {
-            setLoading(false)
+            if (page === 1) {
+                setLoading(false)
+            }
         }
     }, [isConnected])
+
+    const loadConversationByContact = useCallback(async (contactId: string, page: number = 1): Promise<void> => {
+        setLoading(page === 1)
+        setError(null)
+
+        try {
+            if (page === 1) {
+                messageIdsRef.current.clear()
+            }
+
+            const details: ConversationDetailsDto = await ConversationsService.buscarConversaPorContato(
+                contactId,
+                page
+            ) as unknown as ConversationDetailsDto
+
+            if (selectedConversation && isConnected) {
+                try {
+                    await signalRService.leaveConversationGroup(selectedConversation)
+                } catch (error: unknown) {
+                    console.warn("⚠️ Error leaving SignalR group:", error)
+                }
+            }
+
+            setSelectedConversation(details.id)
+            setHasMoreMessages(true)
+
+            setConversationDetails(details)
+
+            setHasMoreMessages(details.hasNextPage)
+
+            const frontendMessages: Message[] = details.mensagens.map(messageMapper.fromDto)
+
+            const uniqueMessages = frontendMessages.filter(msg => !messageIdsRef.current.has(msg.id))
+
+            uniqueMessages.forEach((msg: Message): void => {
+                messageIdsRef.current.add(msg.id)
+            })
+
+            setMessages(prevMessages =>
+                page === 1
+                    ? sortMessagesByTimestamp(uniqueMessages)
+                    : [...prevMessages, ...sortMessagesByTimestamp(uniqueMessages)]
+            )
+
+            if (page === 1 && isConnected) {
+                try {
+                    await signalRService.joinConversationGroup(details.id)
+                } catch (signalRError: unknown) {
+                    console.warn("⚠️ Error joining SignalR group:", signalRError)
+                }
+            }
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Error loading conversation")
+            console.error("❌ Error loading conversation:", err)
+        } finally {
+            if (page === 1) {
+                setLoading(false)
+            }
+        }
+    }, [isConnected]);
+
+    const loadMoreMessages = useCallback(async () => {
+        if (!selectedConversation || !conversationDetails || hasMoreMessages) return;
+
+        try {
+            const nextPage = conversationDetails.currentPage + 1;
+            await loadConversation(selectedConversation, nextPage);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Error loading more messages");
+            console.error("❌ Error loading more messages:", err);
+        }
+    }, [selectedConversation, conversationDetails, hasMoreMessages, loadConversation]);
 
     const sendMessage = useCallback(async (content: string, file?: File): Promise<void> => {
         if (!selectedConversation) return
@@ -76,15 +167,9 @@ export function useConversations(): UseConversationsReturn {
                 formData.append("Anexo", file)
             }
 
-            const newMessage = (await ConversationsService.adicionarMensagem(selectedConversation, formData)) as MessageDto
+            const _ = (await ConversationsService.adicionarMensagem(selectedConversation, formData)) as MessageDto
 
-            const frontendMessage: Message = messageMapper.fromDto(newMessage)
-
-            loadConversation(selectedConversation)
-            if (!messageIdsRef.current.has(frontendMessage.id)) {
-                messageIdsRef.current.add(frontendMessage.id)
-                setMessages((prev: Message[]): Message[] => sortMessagesByDate([{...frontendMessage}, ...prev]))
-            }
+            loadConversation(selectedConversation, 1)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error sending message")
             console.error("❌ Error sending message:", err)
@@ -149,6 +234,7 @@ export function useConversations(): UseConversationsReturn {
         }
 
         setSelectedConversation(conversationId)
+        setHasMoreMessages(true)
 
         if (conversationId) {
             await loadConversation(conversationId)
@@ -170,6 +256,9 @@ export function useConversations(): UseConversationsReturn {
         sendMessage,
         loadConversation,
         startConversation,
-        resolveConversation
+        resolveConversation,
+        loadMoreMessages,
+        hasMoreMessages,
+        loadConversationByContact
     }
 }
