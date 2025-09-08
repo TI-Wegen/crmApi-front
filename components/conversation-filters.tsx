@@ -13,25 +13,19 @@ import {Tag} from "@/types/tag";
 interface ConversationFiltersProps {
     activeFilter: string
     onFilterChange: (filter: string) => void
-    conversationCounts?: {
-        all: number
-        [key: string]: number
-    }
     tags?: Tag[]
 }
 
 export default function ConversationFilters({
     activeFilter,
     onFilterChange,
-    conversationCounts,
     tags = [],
 }: ConversationFiltersProps) {
     const tagFilters = [
-        { key: "", label: "Todos", count: conversationCounts?.all},
+        { key: "", label: "Todos"},
         ...tags.map(tag => ({
             key: tag.id,
             label: tag.nome,
-            count: conversationCounts?.[tag.id] || 0,
         }))
     ]
 
@@ -63,9 +57,6 @@ export default function ConversationFilters({
                         >
                             <div className="flex justify-between w-full">
                                 <span>{filter.label}</span>
-                                <span className="ml-2 bg-gray-200 text-gray-700 rounded-full px-2 py-1 text-xs">
-                                    {filter.count}
-                                </span>
                             </div>
                         </DropdownMenuCheckboxItem>
                     ))}

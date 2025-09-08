@@ -33,7 +33,8 @@ const ConversationsPage = () => {
         loadConversation,
         resolveConversation,
         loadMoreMessages,
-        hasMoreMessages
+        hasMoreMessages,
+        setConversationDetails
     } = useConversations();
 
     const {
@@ -45,7 +46,8 @@ const ConversationsPage = () => {
         filterByStatus,
         loadMoreConversations,
         hasMore,
-        loadConversations
+        loadConversations,
+        setConversations
     } = useConversationList(selectedConversation, () => {
         if (selectedConversation) {
             loadConversation(selectedConversation);
@@ -85,17 +87,6 @@ const ConversationsPage = () => {
         setConversationFilter(filter as ConversationFilter);
         loadConversations({tagId: filter})
     }, [filterByStatus]);
-
-    const conversationCounts = useMemo((): ConversationCounts => {
-        const counts: ConversationCounts = {
-            all: conversations.length,
-            AguardandoNaFila: conversations.filter(c => c.status === "AguardandoNaFila").length,
-            EmAtendimento: conversations.filter(c => c.status === "EmAtendimento").length,
-            Resolvida: conversations.filter(c => c.status === "Resolvida").length,
-        };
-
-        return counts;
-    }, [conversations, tags]);
 
     const error = chatError || conversationsError;
 
@@ -147,6 +138,35 @@ const ConversationsPage = () => {
 
     }, [conversationDetails]);
 
+    const handleTagChange = useCallback((tagId: string) => {
+        const selectedTag = tags.find(tag => tag.id === tagId);
+
+        if (conversationDetails) {
+            setConversationDetails({
+                ...conversationDetails,
+                tagId: tagId,
+                tagName: selectedTag?.nome || null,
+                tagColor: selectedTag?.cor || null
+            });
+        }
+
+        if (selectedConversation) {
+            setConversations(prevConversations =>
+                prevConversations.map(conv =>
+                    conv.id === selectedConversation
+                        ? {
+                            ...conv,
+                            tagId: tagId,
+                            tagName: selectedTag?.nome || null,
+                            tagColor: selectedTag?.cor || null
+                        }
+                        : conv
+                )
+            );
+        }
+    }, [selectedConversation, conversationDetails, tags, setConversations, setConversationDetails]);
+
+
     return (
         <div className="flex flex-col h-full bg-gray-100">
             <Toaster richColors position="top-right"/>
@@ -166,7 +186,6 @@ const ConversationsPage = () => {
                                 <ConversationFilters
                                     activeFilter={conversationFilter}
                                     onFilterChange={handleFilterChange}
-                                    conversationCounts={conversationCounts}
                                     tags={tags}
                                 />
                                 <div className="flex-1 overflow-hidden">
@@ -196,6 +215,7 @@ const ConversationsPage = () => {
                             onLoadMoreMessages={loadMoreMessages}
                             hasMoreMessages={hasMoreMessages}
                             isFirstPage={(conversationDetails?.currentPage ?? false) === 1}
+                            onTagChange={handleTagChange}
                         />
                     </div>
                 </div>

@@ -34,6 +34,7 @@ interface UseConversationListReturn {
     searchConversations: (termoBusca: string) => void
     signalRConnected: boolean
     refreshConversations: () => Promise<void>
+    setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
 }
 
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
@@ -381,6 +382,7 @@ export function useConversationList(activeConversationId: string | null, onConve
         filterByStatus,
         searchConversations,
         signalRConnected: isSignalRConnected,
-        refreshConversations
+        refreshConversations,
+        setConversations
     }
 }

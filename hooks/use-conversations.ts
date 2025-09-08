@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useRef, useState} from "react"
+import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "react"
 import {ConversationsService} from "@/services/conversations"
 import {signalRService} from "@/services/signalr"
 import {messageMapper} from "@/mappers/message-mapper"
-import type {ConversationDetailsDto} from "@/types/conversa"
+import {Conversation, ConversationDetailsDto} from "@/types/conversa"
 import type {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem"
 import {sortMessagesByDate, sortMessagesByTimestamp} from "@/utils/sort-messages-by-date"
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
@@ -21,7 +21,8 @@ export interface UseConversationsReturn {
     loadConversationByContact: (contactId: string, page: number) => Promise<void>
     resolveConversation: (id: string) => Promise<unknown>
     loadMoreMessages: () => Promise<void>
-    hasMoreMessages: boolean
+    hasMoreMessages: boolean,
+    setConversationDetails: React.Dispatch<SetStateAction<ConversationDetailsDto | null>>
 }
 
 export function useConversations(): UseConversationsReturn {
@@ -259,6 +260,7 @@ export function useConversations(): UseConversationsReturn {
         resolveConversation,
         loadMoreMessages,
         hasMoreMessages,
+        setConversationDetails,
         loadConversationByContact
     }
 }

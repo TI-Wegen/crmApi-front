@@ -34,6 +34,7 @@ interface ChatAreaProps {
     hasMoreMessages?: boolean
     hasTagsMarks?: boolean
     isFirstPage?: boolean
+    onTagChange?: (tagId: string) => void
 }
 
 export default function ChatArea({
@@ -47,7 +48,8 @@ export default function ChatArea({
                                      onLoadMoreMessages,
                                      hasMoreMessages = true,
                                      hasTagsMarks = true,
-                                     isFirstPage = true
+                                     isFirstPage = true,
+                                     onTagChange
                                  }: ChatAreaProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -84,7 +86,6 @@ export default function ChatArea({
         }
     }, [handleScroll]);
 
-
     useEffect(() => {
         if (isFetching && messages.length > 0) {
 
@@ -112,6 +113,10 @@ export default function ChatArea({
     const handleTagContact = async (tagId: string) => {
         if (!conversation?.id) return;
         addTagInContact(conversation?.id, tagId)
+
+        if (onTagChange) {
+            onTagChange(tagId);
+        }
     }
 
     const scrollToBottom = (): void => {
