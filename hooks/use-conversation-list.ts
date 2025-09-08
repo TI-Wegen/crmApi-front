@@ -11,6 +11,7 @@ import {
     ConversationSummaryDto
 } from "@/types/conversa";
 import {useAuth} from "@/hooks/use-auth";
+import {conversationMapper} from "@/mappers/conversation-mapper";
 
 interface ConversationStatusChange {
     conversationId: string;
@@ -38,24 +39,7 @@ interface UseConversationListReturn {
 }
 
 function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
-    return {
-        id: dto.id,
-        contatoNome: dto.contatoNome,
-        lastMessage: dto.ultimaMensagemPreview,
-        timestamp: formatMessageTimestamp(dto.ultimaMensagemTimestamp),
-        avatar: `/placeholder.svg?height=40&width=40`,
-        status: dto.status,
-        agentName: dto.agenteNome || undefined,
-        atendimentoId: dto.atendimentoId || "",
-        sessaoWhatsappAtiva: dto.sessaoWhatsappAtiva,
-        sessaoWhatsappExpiraEm: dto.sessaoWhatsappExpiraEm || null,
-        unread: 0,
-        contatoId: dto.contatoId,
-        tagId: dto.tagId,
-        tagName: dto.tagName,
-        tagColor: dto.tagColor,
-        contatoTelefone: dto.contatoTelefone,
-    }
+    return conversationMapper.fromListItemDto(dto);
 }
 
 export function useConversationList(activeConversationId: string | null, onConversationUpdate?: () => void): UseConversationListReturn {
@@ -179,7 +163,7 @@ export function useConversationList(activeConversationId: string | null, onConve
                     new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime()
             )
 
-            const frontendConversations = dtos.map(convertDtoToConversation)
+            const frontendConversations = dtos.map(conversationMapper.fromListItemDto)
             conversationIdsRef.current.clear()
             frontendConversations.forEach((conv: any) => conversationIdsRef.current.add(conv.id))
 
@@ -229,7 +213,7 @@ export function useConversationList(activeConversationId: string | null, onConve
                     new Date(b.ultimaMensagemTimestamp).getTime() - new Date(a.ultimaMensagemTimestamp).getTime()
             )
 
-            const frontendConversations = dtos.map(convertDtoToConversation)
+            const frontendConversations = dtos.map(conversationMapper.fromListItemDto)
 
             setAllConversations(prev => {
                 const newConversations = [...prev]
@@ -303,24 +287,7 @@ export function useConversationList(activeConversationId: string | null, onConve
     const isSignalRConnected = useConversationSignalREvents({
         groups: ["UnassignedQueue"],
         onNewConversation: (summaryDto: ConversationSummaryDto) => {
-            const newConversation: Conversation = {
-                id: summaryDto.id,
-                contatoNome: summaryDto.contatoNome,
-                lastMessage: summaryDto.ultimaMensagemPreview,
-                timestamp: formatMessageTimestamp(summaryDto.ultimaMensagemTimestamp),
-                avatar: `/placeholder.svg?height=40&width=40`,
-                status: summaryDto.status,
-                agentName: summaryDto.agenteNome || undefined,
-                atendimentoId: "",
-                sessaoWhatsappAtiva: false,
-                sessaoWhatsappExpiraEm: null,
-                unread: 0,
-                contatoId: summaryDto.contatoId,
-                tagId: summaryDto.tagId,
-                tagName: summaryDto.tagName,
-                tagColor: summaryDto.tagColor,
-                contatoTelefone: summaryDto.contatoTelefone,
-            };
+            const newConversation: Conversation = conversationMapper.fromSummaryDto(summaryDto);
             addOrUpdateConversation(newConversation);
         },
         onNewMessage: handleNewMessage,
