@@ -154,6 +154,11 @@ export default function ChatArea({
         {} as Record<string, Message[]>,
     )
 
+    const handleSendMessage = (content: string, file?: File) => {
+        onSendMessage(content, file)
+        scrollToBottom()
+    }
+
     return (
         <div className="flex flex-col h-full bg-white">
             <div className="p-4 border-b border-gray-200 bg-white">
@@ -292,7 +297,7 @@ export default function ChatArea({
             )}
 
             <MessageInput
-                onSendMessage={onSendMessage}
+                onSendMessage={handleSendMessage}
                 sessaoAtiva={true}
                 onConversationStarted={onConversationStarted}
                 conversationId={conversation.contatoId}
