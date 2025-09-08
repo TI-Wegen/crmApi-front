@@ -1,12 +1,13 @@
 "use client"
 
-import type React from "react"
-import {useState} from "react"
+import React, {useEffect} from "react"
+import {useState, useRef} from "react"
 import {Loader2, Paperclip, Send, Smile} from "lucide-react"
 import {Button} from "@/components/ui/button"
 import {Input} from "@/components/ui/input"
 import {useTemplates} from "@/hooks/use-templates"
 import {Template} from "@/types/template"
+import EmojiPicker, {EmojiClickData} from "emoji-picker-react"
 
 interface MessageInputProps {
     onSendMessage: (content: string, file?: File) => void
@@ -27,8 +28,31 @@ export default function MessageInput({
     const [message, setMessage] = useState<string>("")
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
     const [loading, setLoading] = useState<boolean>(false)
+    const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
 
     const {templates, loading: loadingTemplates} = useTemplates()
+    const emojiPickerRef = useRef<HTMLDivElement>(null)
+
+    const handleEmojiClick = (emojiData: EmojiClickData) => {
+        setMessage(prevMessage => prevMessage + emojiData.emoji);
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+            setShowEmojiPicker(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault()
@@ -70,7 +94,7 @@ export default function MessageInput({
     }
 
     return (
-        <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="p-4 border-t border-gray-200 bg-white relative">
             <form onSubmit={handleSubmit} className="flex flex-col gap-2">
                 {selectedFile && (
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -119,9 +143,25 @@ export default function MessageInput({
                                     variant="ghost"
                                     size="sm"
                                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 >
                                     <Smile className="h-4 w-4"/>
                                 </Button>
+
+                                {/* Emoji Picker */}
+                                {showEmojiPicker && (
+                                    <div
+                                        ref={emojiPickerRef}
+                                        className="absolute bottom-full right-0 mb-2 z-10"
+                                        style={{ transform: 'translateY(-10px)' }}
+                                    >
+                                        <EmojiPicker
+                                            onEmojiClick={handleEmojiClick}
+                                            width={300}
+                                            height={400}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (
