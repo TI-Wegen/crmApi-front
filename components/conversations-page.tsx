@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {Toaster} from "sonner";
 import ConversationList from "@/components/conversation-list";
 import ChatArea from "@/components/chat-area";
@@ -10,16 +10,14 @@ import {useAgents} from "@/hooks/use-agents";
 import {useConversations} from "@/hooks/use-conversations";
 import {useConversationList} from "@/hooks/use-conversation-list";
 import {useTags} from "@/hooks/use-tags";
-
-interface ConversationCounts {
-    all: number;
-    [key: string]: number;
-}
+import {Conversation} from "@/types/conversa";
 
 type ConversationFilter = "all" | string;
 const ConversationsPage = () => {
     const [showNewConversation, setShowNewConversation] = useState<boolean>(false);
     const [conversationFilter, setConversationFilter] = useState<ConversationFilter>("all");
+    const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+    const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
 
     const {
         selectedConversation,
@@ -138,6 +136,22 @@ const ConversationsPage = () => {
 
     }, [conversationDetails]);
 
+    const filterConversationsBySessionStatus = useCallback((tab: 'active' | 'archived') => {
+        setActiveTab(tab);
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'archived') {
+            setFilteredConversations(
+                conversations.filter(conv => conv.status === "Resolvida")
+            );
+        } else {
+            setFilteredConversations(
+                conversations.filter(conv => conv.status !== "Resolvida")
+            );
+        }
+    }, [conversations, activeTab]);
+
     const handleTagChange = useCallback((tagId: string) => {
         const selectedTag = tags.find(tag => tag.id === tagId);
 
@@ -183,6 +197,20 @@ const ConversationsPage = () => {
 
                         <div className="flex-1 overflow-hidden">
                             <div className="flex-1 flex flex-col h-full">
+                                <div className="flex border-b border-gray-200">
+                                    <button
+                                        className={`flex-1 py-3 text-center font-medium ${activeTab === 'active' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                                        onClick={() => filterConversationsBySessionStatus('active')}
+                                    >
+                                        Em Andamento
+                                    </button>
+                                    <button
+                                        className={`flex-1 py-3 text-center font-medium ${activeTab === 'archived' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                                        onClick={() => filterConversationsBySessionStatus('archived')}
+                                    >
+                                        Arquivados
+                                    </button>
+                                </div>
                                 <ConversationFilters
                                     activeFilter={conversationFilter}
                                     onFilterChange={handleFilterChange}
@@ -190,7 +218,7 @@ const ConversationsPage = () => {
                                 />
                                 <div className="flex-1 overflow-hidden">
                                     <ConversationList
-                                        conversations={conversations}
+                                        conversations={filteredConversations}
                                         selectedId={selectedConversation || ""}
                                         onSearch={searchConversations}
                                         loading={conversationsLoading}

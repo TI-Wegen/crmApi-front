@@ -38,9 +38,6 @@ interface UseConversationListReturn {
     setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
 }
 
-function convertDtoToConversation(dto: ConversationListItemDto): Conversation {
-    return conversationMapper.fromListItemDto(dto);
-}
 
 export function useConversationList(activeConversationId: string | null, onConversationUpdate?: () => void): UseConversationListReturn {
     const {isAuthenticated, user} = useAuth()

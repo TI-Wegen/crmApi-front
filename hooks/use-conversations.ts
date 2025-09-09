@@ -2,7 +2,7 @@ import React, {SetStateAction, useCallback, useEffect, useRef, useState} from "r
 import {ConversationsService} from "@/services/conversations"
 import {signalRService} from "@/services/signalr"
 import {messageMapper} from "@/mappers/message-mapper"
-import {Conversation, ConversationDetailsDto} from "@/types/conversa"
+import {ConversationDetailsDto} from "@/types/conversa"
 import type {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem"
 import {sortMessagesByDate, sortMessagesByTimestamp} from "@/utils/sort-messages-by-date"
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
@@ -63,8 +63,8 @@ export function useConversations(): UseConversationsReturn {
 
             setMessages(prevMessages =>
                 page === 1
-                    ? sortMessagesByTimestamp(uniqueMessages)
-                    : [...prevMessages, ...sortMessagesByTimestamp(uniqueMessages)]
+                    ? sortMessagesByDate(uniqueMessages)
+                    : sortMessagesByDate([...prevMessages, ...uniqueMessages])
             )
 
             if (page === 1 && isConnected) {
@@ -145,7 +145,7 @@ export function useConversations(): UseConversationsReturn {
     }, [isConnected]);
 
     const loadMoreMessages = useCallback(async () => {
-        if (!selectedConversation || !conversationDetails || hasMoreMessages) return;
+        if (!selectedConversation || !conversationDetails || !hasMoreMessages) return;
 
         try {
             const nextPage = conversationDetails.currentPage + 1;

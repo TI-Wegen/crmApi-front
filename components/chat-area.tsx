@@ -265,17 +265,8 @@ export default function ChatArea({
                 )}
 
                 {Object.entries(groupedMessages)
-                    .sort(([dateA], [dateB]): number =>
-                        new Date(dateA).getTime() - new Date(dateB).getTime()
-                    )
                     .map(([date, dayMessages]) => (
                         <div key={date}>
-                            <div className="flex justify-center mb-4">
-                                <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
-                                    {formatDate(date)}
-                                </span>
-                            </div>
-
                             <div className="space-y-2">
                                 {dayMessages.map((message: Message) => (
                                     <MessageBubble key={message.id} message={message}/>

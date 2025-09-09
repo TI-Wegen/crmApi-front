@@ -7,7 +7,10 @@ export const messageMapper = {
         const date = new Date(dto.timestamp)
 
         let formattedTimestamp: string
-        formattedTimestamp = date.toLocaleTimeString("pt-BR", {
+        formattedTimestamp = date.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
@@ -18,10 +21,11 @@ export const messageMapper = {
             content: dto.texto,
             timestamp: formattedTimestamp,
             isFromClient: dto.remetenteTipo === "Cliente",
-            date: new Date(formattedTimestamp).toString(),
+            date: date.toString(),
             anexoUrl: dto.anexoUrl,
         }
     },
+
 
     fromSignalR(dto: MessageWithConversationIdDto): Message {
         return {

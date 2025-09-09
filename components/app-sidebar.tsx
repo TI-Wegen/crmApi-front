@@ -9,6 +9,12 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {Button} from "@/components/ui/button";
 import {useAuth} from "@/hooks/use-auth";
 import {usePathname, useRouter} from 'next/navigation';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MenuItem {
     name: string
@@ -26,10 +32,9 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    // Verifica se está na página de login
     const isLoginPage = pathname === "/login";
 
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const topMenuItems: MenuItem[] = [
         {
@@ -66,7 +71,6 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
         }
     }
 
-    // Se estiver na página de login, renderiza apenas o conteúdo sem a sidebar
     if (isLoginPage) {
         return <>{children}</>;
     }
@@ -95,40 +99,51 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                     <ul className="space-y-2 font-medium flex-grow">
                         {topMenuItems.map((item, index) => (
                             <li key={index}>
-                                <a
-                                    href={item.href}
-                                    className={`flex items-center p-2 rounded-lg group transition-colors ${
-                                        isActive(item.href)
-                                            ? "bg-gray-800 text-white"
-                                            : "text-gray-900 hover:bg-gray-100"
-                                    } ${isExpanded ? "" : "justify-center"}`}
-                                    onClick={(e) => {
-                                        e.preventDefault()
-                                        router.push(item.href)
-                                    }}>
-                                    <span className={isActive(item.href) ? "text-white" : ""}>
-                                        {item.icon}
-                                    </span>
-                                    {isExpanded && (
-                                        <>
-                                            <span className="ms-3">{item.name}</span>
-                                            {item.badge && (
-                                                <span
-                                                    className={`inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full ${
-                                                        item.badge.type === "primary"
-                                                            ? isActive(item.href)
-                                                                ? "text-blue-100 bg-blue-800"
-                                                                : "text-blue-800 bg-blue-100"
-                                                            : isActive(item.href)
-                                                                ? "text-gray-100 bg-gray-800"
-                                                                : "text-gray-800 bg-gray-100"
-                                                    }`}>
-                                                    {item.badge.text}
-                                                </span>
-                                            )}
-                                        </>
-                                    )}
-                                </a>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <a
+                                                href={item.href}
+                                                className={`flex items-center p-2 rounded-lg group transition-colors ${
+                                                    isActive(item.href)
+                                                        ? "bg-gray-800 text-white"
+                                                        : "text-gray-900 hover:bg-gray-100"
+                                                } ${isExpanded ? "" : "justify-center"}`}
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    router.push(item.href)
+                                                }}>
+              <span className={isActive(item.href) ? "text-white" : ""}>
+                {item.icon}
+              </span>
+                                                {isExpanded && (
+                                                    <>
+                                                        <span className="ms-3">{item.name}</span>
+                                                        {item.badge && (
+                                                            <span
+                                                                className={`inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full ${
+                                                                    item.badge.type === "primary"
+                                                                        ? isActive(item.href)
+                                                                            ? "text-blue-100 bg-blue-800"
+                                                                            : "text-blue-800 bg-blue-100"
+                                                                        : isActive(item.href)
+                                                                            ? "text-gray-100 bg-gray-800"
+                                                                            : "text-gray-800 bg-gray-100"
+                                                                }`}>
+                      {item.badge.text}
+                    </span>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </a>
+                                        </TooltipTrigger>
+                                        {!isExpanded && (
+                                            <TooltipContent side="right">
+                                                <p>{item.name}</p>
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
                             </li>
                         ))}
                     </ul>
