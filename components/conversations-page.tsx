@@ -11,6 +11,7 @@ import {useConversations} from "@/hooks/use-conversations";
 import {useConversationList} from "@/hooks/use-conversation-list";
 import {useTags} from "@/hooks/use-tags";
 import {Conversation} from "@/types/conversa";
+import UserProfileMenu from "@/components/user-profile-menu";
 
 type ConversationFilter = "all" | string;
 const ConversationsPage = () => {
@@ -18,6 +19,7 @@ const ConversationsPage = () => {
     const [conversationFilter, setConversationFilter] = useState<ConversationFilter>("all");
     const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
     const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
     const {
         selectedConversation,
@@ -180,6 +182,9 @@ const ConversationsPage = () => {
         }
     }, [selectedConversation, conversationDetails, tags, setConversations, setConversationDetails]);
 
+    const handleViewProfile = () => {
+        setIsProfileMenuOpen(!isProfileMenuOpen);
+    };
 
     return (
         <div className="flex flex-col h-full bg-gray-100">
@@ -244,8 +249,20 @@ const ConversationsPage = () => {
                             hasMoreMessages={hasMoreMessages}
                             isFirstPage={(conversationDetails?.currentPage ?? false) === 1}
                             onTagChange={handleTagChange}
+                            onViewProfile={handleViewProfile}
                         />
                     </div>
+                    <UserProfileMenu
+                        user={{
+                            name: formattedConversation?.contatoNome || '',
+                            phone: formattedConversation?.contatoTelefone || '',
+                            avatar: formattedConversation?.avatar,
+                            tagName: formattedConversation?.tagName,
+                            tagColor: formattedConversation?.tagColor
+                        }}
+                        isOpen={isProfileMenuOpen}
+                        onClose={handleViewProfile}
+                    />
                 </div>
             </div>
         </div>

@@ -1,5 +1,3 @@
-"use client"
-
 import {useCallback, useEffect, useRef, useState} from "react"
 import MessageBubble from "./message-bubble"
 import MessageInput from "./message-input"
@@ -35,6 +33,7 @@ interface ChatAreaProps {
     hasTagsMarks?: boolean
     isFirstPage?: boolean
     onTagChange?: (tagId: string) => void
+    onViewProfile: () => void
 }
 
 export default function ChatArea({
@@ -49,7 +48,8 @@ export default function ChatArea({
                                      hasMoreMessages = true,
                                      hasTagsMarks = true,
                                      isFirstPage = true,
-                                     onTagChange
+                                     onTagChange,
+                                     onViewProfile
                                  }: ChatAreaProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -181,15 +181,25 @@ export default function ChatArea({
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        {
-                            hasTagsMarks && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" disabled={isSubmitting}>
-                                            <MoreVertical className="h-4 w-4"/>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" disabled={isSubmitting}>
+                                    <MoreVertical className="h-4 w-4"/>
+                                </Button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onSelect={onViewProfile}
+                                    className="focus:bg-red-50"
+                                >
+                                    <User className="mr-2 h-4 w-4"/>
+                                    <span>Ver perfil</span>
+                                </DropdownMenuItem>
+                                
+                                {hasTagsMarks && (
+                                    <>
                                         <DropdownMenuSub>
                                             <DropdownMenuSubTrigger>
                                                 <Tag className="mr-2 h-4 w-4"/>
@@ -220,20 +230,20 @@ export default function ChatArea({
                                                 )}
                                             </DropdownMenuSubContent>
                                         </DropdownMenuSub>
-
+                                        
                                         <DropdownMenuSeparator/>
+                                    </>
+                                )}
 
-                                        <DropdownMenuItem
-                                            onSelect={handleEnd}
-                                            className="text-red-500 focus:text-red-500 focus:bg-red-50"
-                                        >
-                                            <LogOut className="mr-2 h-4 w-4"/>
-                                            <span>Encerrar Atendimento</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )
-                        }
+                                <DropdownMenuItem
+                                    onSelect={handleEnd}
+                                    className="text-red-500 focus:text-red-500 focus:bg-red-50"
+                                >
+                                    <LogOut className="mr-2 h-4 w-4"/>
+                                    <span>Encerrar Atendimento</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </div>
@@ -245,7 +255,7 @@ export default function ChatArea({
                         className="rounded-full p-2 shadow-lg bg-blue-500 hover:bg-blue-600"
                         onClick={handleScrollToBottom}
                     >
-                        <ArrowDown className="h-5 w-5 text-white" />
+                        <ArrowDown className="h-5 w-5 text-white"/>
                     </Button>
                 </div>
             )}

@@ -1,4 +1,3 @@
-// components/contacts-manager.tsx
 "use client"
 
 import {useState, useCallback, useRef, useEffect} from "react"
@@ -128,8 +127,8 @@ export default function ContactsManager({onStartConversation}: ContactsManagerPr
                             <div
                                 key={contact.id}
                                 ref={index === contacts.length - 1 ? loadMoreIfIntersecting : null}
-                                onClick={() => handleContactClick(contact.id)} // Adicionando o handler de clique
-                                className="cursor-pointer" // Adicionando cursor de pointer para indicar que é clicável
+                                onClick={() => handleContactClick(contact.id)}
+                                className="cursor-pointer"
                             >
                                 <Card className="hover:shadow-md transition-shadow">
                                     <CardContent className="p-4">

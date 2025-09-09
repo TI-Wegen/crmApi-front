@@ -1,14 +1,17 @@
 "use client";
 
-import {useCallback, useMemo} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {Toaster} from "sonner";
 import ChatArea from "@/components/chat-area";
 import ContactsManager from "@/components/contacts-manager";
 import {useConversations} from "@/hooks/use-conversations";
 import {useAgents} from "@/hooks/use-agents";
 import {Conversation} from "@/types/conversa";
+import UserProfileMenu from "@/components/user-profile-menu";
 
 const ContactsPage = () => {
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
     const {
         conversationDetails,
         messages,
@@ -20,7 +23,8 @@ const ContactsPage = () => {
         loadMoreMessages,
         hasMoreMessages,
         loadConversationByContact,
-        selectConversation
+        selectConversation,
+        setConversationDetails
     } = useConversations();
 
     const {setores} = useAgents();
@@ -65,9 +69,23 @@ const ContactsPage = () => {
             sessaoWhatsappAtiva: conversationDetails.sessaoWhatsappAtiva,
             sessaoWhatsappExpiraEm: conversationDetails.sessaoWhatsappExpiraEm,
             contatoId: conversationDetails.contatoId || "",
+            contatoTelefone: conversationDetails.contatoTelefone || "",
             agenteId: conversationDetails.agenteId || "",
         } as Conversation;
     }, [conversationDetails]);
+
+    const handleViewProfile = () => {
+        setIsProfileMenuOpen(!isProfileMenuOpen);
+    };
+
+    const handleUserUpdate = (updatedUser: { name: string }) => {
+        if (conversationDetails) {
+            setConversationDetails({
+                ...conversationDetails,
+                contatoNome: updatedUser.name
+            });
+        }
+    }
 
     if (chatError) {
         return (
@@ -115,8 +133,22 @@ const ContactsPage = () => {
                             hasTagsMarks={false}
                             hasMoreMessages={hasMoreMessages}
                             isFirstPage={(conversationDetails?.currentPage ?? 1) === 1}
+                            onViewProfile={handleViewProfile}
+
                         />
                     </div>
+                    <UserProfileMenu
+                        user={{
+                            id: formattedConversation?.contatoId || '',
+                            name: formattedConversation?.contatoNome || '',
+                            phone: formattedConversation?.contatoTelefone || '',
+                            avatar: formattedConversation?.avatar
+                        }}
+                        isOpen={isProfileMenuOpen}
+                        onClose={handleViewProfile}
+                        onlyView={false}
+                        onUserUpdate={handleUserUpdate}
+                    />
                 </div>
             </div>
         </div>
