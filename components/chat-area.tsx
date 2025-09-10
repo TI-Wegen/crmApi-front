@@ -1,11 +1,10 @@
 import {useCallback, useEffect, useRef, useState} from "react"
 import MessageBubble from "./message-bubble"
 import MessageInput from "./message-input"
-import {formatDate} from "@/utils/date-formatter"
 import {Conversation} from "@/types/conversa";
 import {Message} from "@/types/messagem";
 import {SetorDto} from "@/types/setor";
-import {LogOut, MoreVertical, Tag, User, ArrowDown} from "lucide-react";
+import {ArrowDown, LogOut, MoreVertical, Tag, User} from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -56,7 +55,7 @@ export default function ChatArea({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
     const [isFetching, setIsFetching] = useState<boolean>(false)
     const [showScrollButton, setShowScrollButton] = useState<boolean>(false)
-    const scrollPositionRef = useRef<number>(0);
+    const previousHeightRef = useRef<number>(0);
 
     const {tags, loading: tagsLoading} = useTags();
     const {addTagInContact} = useContacts();
@@ -66,9 +65,7 @@ export default function ChatArea({
 
         const {scrollTop} = messagesContainerRef.current;
 
-        if (scrollTop < 50) {
-
-            scrollPositionRef.current = messagesContainerRef.current.scrollHeight - messagesContainerRef.current.scrollTop;
+        if (scrollTop <= 50 && !isFetching) {
             setIsFetching(true);
             onLoadMoreMessages();
         }
@@ -87,20 +84,24 @@ export default function ChatArea({
     }, [handleScroll]);
 
     useEffect(() => {
-        if (isFetching && messages.length > 0) {
+        if (messagesContainerRef.current && isFetching) {
+            previousHeightRef.current = messagesContainerRef.current.scrollHeight;
+        }
+    }, [messages, isFetching]);
 
-            if (messagesContainerRef.current) {
-                const newScrollTop = messagesContainerRef.current.scrollHeight - scrollPositionRef.current;
-                messagesContainerRef.current.scrollTop = newScrollTop;
-                setIsFetching(false);
-            }
+    useEffect(() => {
+        if (isFetching && messages.length > 0 && messagesContainerRef.current) {
+            const {scrollTop} = messagesContainerRef.current;
+
+            messagesContainerRef.current.scrollTop = scrollTop;
+
+            setIsFetching(false);
         }
     }, [messages, isFetching]);
 
     useEffect((): void => {
-        if (isFirstPage) {
+        if (isFirstPage)
             scrollToBottom();
-        }
     }, [messages, conversation, isFirstPage]);
 
     const handleEnd = async (): Promise<void> => {
@@ -197,7 +198,7 @@ export default function ChatArea({
                                     <User className="mr-2 h-4 w-4"/>
                                     <span>Ver perfil</span>
                                 </DropdownMenuItem>
-                                
+
                                 {hasTagsMarks && (
                                     <>
                                         <DropdownMenuSub>
@@ -230,7 +231,7 @@ export default function ChatArea({
                                                 )}
                                             </DropdownMenuSubContent>
                                         </DropdownMenuSub>
-                                        
+
                                         <DropdownMenuSeparator/>
                                     </>
                                 )}

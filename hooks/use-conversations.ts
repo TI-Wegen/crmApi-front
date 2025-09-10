@@ -145,7 +145,7 @@ export function useConversations(): UseConversationsReturn {
     }, [isConnected]);
 
     const loadMoreMessages = useCallback(async () => {
-        if (!selectedConversation || !conversationDetails || !hasMoreMessages) return;
+        if (!selectedConversation || !conversationDetails) return;
 
         try {
             const nextPage = conversationDetails.currentPage + 1;
