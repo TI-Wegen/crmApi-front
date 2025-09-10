@@ -157,7 +157,6 @@ export default function ChatArea({
 
     const handleSendMessage = (content: string, file?: File) => {
         onSendMessage(content, file)
-        scrollToBottom()
     }
 
     return (

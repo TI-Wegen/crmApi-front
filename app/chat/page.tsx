@@ -4,15 +4,19 @@ import {useRouter, usePathname} from "next/navigation";
 import {MessageCircle, Users} from "lucide-react";
 import ConversationsPage from "@/components/conversations-page";
 import ContactsPage from "@/components/contacts-page";
+import {useEffect} from "react";
+
 
 const ChatPage = () => {
-    const router = useRouter();
     const pathname = usePathname();
+    const router = useRouter();
 
-    if (pathname === "/chat") {
-        router.push("/chat/conversations");
-        return null;
-    }
+    useEffect(() => {
+        if (pathname === "/chat") {
+            router.push("/chat/conversations");
+        }
+    }, [pathname, router]);
+
 
     return (
         <div className="flex flex-col h-screen">
@@ -42,8 +46,8 @@ const ChatPage = () => {
             </div>
 
             <div className="flex-1 overflow-hidden">
-                {pathname === "/chat/conversations" && <ConversationsPage />}
-                {pathname === "/chat/contacts" && <ContactsPage />}
+                {pathname === "/chat/conversations" && <ConversationsPage/>}
+                {pathname === "/chat/contacts" && <ContactsPage/>}
             </div>
         </div>
     );
