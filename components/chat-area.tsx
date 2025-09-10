@@ -143,17 +143,22 @@ export default function ChatArea({
         )
     }
 
-    const groupedMessages: Record<string, Message[]> = messages.reduce(
-        (groups: Record<string, Message[]>, message: Message): Record<string, Message[]> => {
-            const date: string = message.date
-            if (!groups[date]) {
-                groups[date] = []
-            }
-            groups[date] = [message, ...groups[date]]
-            return groups
-        },
-        {} as Record<string, Message[]>,
-    )
+    const groupedMessages: Record<string, Message[]> = [...messages]
+        .filter((message, index, self) =>
+            index === self.findIndex(m => m.id === message.id)
+        )
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .reduce(
+            (groups: Record<string, Message[]>, message: Message): Record<string, Message[]> => {
+                const date: string = message.date
+                if (!groups[date]) {
+                    groups[date] = []
+                }
+                groups[date].push(message)
+                return groups
+            },
+            {} as Record<string, Message[]>,
+        )
 
     const handleSendMessage = (content: string, file?: File) => {
         onSendMessage(content, file)

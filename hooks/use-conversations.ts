@@ -63,8 +63,10 @@ export function useConversations(): UseConversationsReturn {
 
             setMessages(prevMessages =>
                 page === 1
-                    ? sortMessagesByDate(uniqueMessages)
-                    : sortMessagesByDate([...prevMessages, ...uniqueMessages])
+                    ? sortMessagesByTimestamp(uniqueMessages)
+                    : [...prevMessages, ...uniqueMessages].sort((a, b) =>
+                        new Date(a.date).getTime() - new Date(b.date).getTime()
+                    )
             )
 
             if (page === 1 && isConnected) {
@@ -168,9 +170,7 @@ export function useConversations(): UseConversationsReturn {
                 formData.append("Anexo", file)
             }
 
-            const _ = (await ConversationsService.adicionarMensagem(selectedConversation, formData)) as MessageDto
-
-            loadConversation(selectedConversation, 1)
+            (await ConversationsService.adicionarMensagem(selectedConversation, formData)) as MessageDto
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Error sending message")
             console.error("❌ Error sending message:", err)
