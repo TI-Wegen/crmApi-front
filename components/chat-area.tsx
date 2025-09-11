@@ -60,28 +60,28 @@ export default function ChatArea({
     const {tags, loading: tagsLoading} = useTags();
     const {addTagInContact} = useContacts();
 
-    const handleScroll = useCallback(() => {
-        if (!messagesContainerRef.current || !onLoadMoreMessages || !hasMoreMessages || isFetching) return;
-
-        const {scrollTop} = messagesContainerRef.current;
-
-        if (scrollTop <= 50 && !isFetching) {
-            setIsFetching(true);
-            onLoadMoreMessages();
-        }
-
-        const container = messagesContainerRef.current;
-        const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-        setShowScrollButton(!atBottom);
-    }, [onLoadMoreMessages, hasMoreMessages, isFetching]);
-
-    useEffect(() => {
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, [handleScroll]);
+    // const handleScroll = useCallback(() => {
+    //     if (!messagesContainerRef.current || !onLoadMoreMessages || !hasMoreMessages || isFetching) return;
+    //
+    //     const {scrollTop} = messagesContainerRef.current;
+    //
+    //     if (scrollTop <= 50 && !isFetching) {
+    //         setIsFetching(true);
+    //         onLoadMoreMessages();
+    //     }
+    //
+    //     const container = messagesContainerRef.current;
+    //     const atBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+    //     setShowScrollButton(!atBottom);
+    // }, [onLoadMoreMessages, hasMoreMessages, isFetching]);
+    //
+    // useEffect(() => {
+    //     const container = messagesContainerRef.current;
+    //     if (container) {
+    //         container.addEventListener('scroll', handleScroll);
+    //         return () => container.removeEventListener('scroll', handleScroll);
+    //     }
+    // }, [handleScroll]);
 
     useEffect(() => {
         if (messagesContainerRef.current && isFetching) {
@@ -268,7 +268,7 @@ export default function ChatArea({
             <div
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 relative"
-                onScroll={handleScroll}
+                // onScroll={handleScroll}
             >
                 {isFetching && hasMoreMessages && (
                     <div className="flex justify-center py-2">
