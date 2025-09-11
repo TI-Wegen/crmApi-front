@@ -109,8 +109,8 @@ export default function ChatArea({
     };
 
     const handleTagContact = async (tagId: string) => {
-        if (!conversation?.id) return;
-        addTagInContact(conversation.id, tagId);
+        if (!conversation?.contatoId) return;
+        addTagInContact(conversation.contatoId, tagId);
         onTagChange?.(tagId);
     };
 
@@ -155,7 +155,7 @@ export default function ChatArea({
                                 className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
                             />
                         ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center"    >
                                 <User className="text-gray-500" />
                             </div>
                         )}
