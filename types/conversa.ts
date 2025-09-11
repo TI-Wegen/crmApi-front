@@ -8,7 +8,7 @@ export interface ConversationDto {
     contatoNome: string;
     contatoTelefone: string;
     agenteId?: string;
-    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida";
+    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente";
     criadaEm: string;
     atualizadaEm?: string;
     ultimaMensagem?: string;
@@ -27,7 +27,7 @@ export interface ConversationListItemDto {
     contatoNome: string;
     contatoTelefone: string;
     agenteNome?: string | null;
-    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida";
+    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente";
     ultimaMensagemTimestamp: string;
     ultimaMensagemPreview: string;
     mensagensNaoLidas?: number;
@@ -59,7 +59,7 @@ export interface ConversationSummaryDto {
     contatoTelefone: string;
     agenteNome?: string;
     mensagensNaoLidas: number;
-    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida";
+    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente";
     ultimaMensagemTimestamp: string;
     ultimaMensagemPreview: string;
     sessaoWhatsappAtiva: boolean;
@@ -80,7 +80,7 @@ export interface Conversation {
     timestamp: string;
     unread: number;
     avatar: string;
-    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida";
+    status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente";
     agentName?: string;
     sessaoWhatsappAtiva: boolean;
     tagId: string | null;
@@ -92,7 +92,7 @@ export interface Conversation {
 export interface ConversationSearchParams {
     pageNumber?: number;
     pageSize?: number;
-    status?: "AguardandoNaFila" | "EmAtendimento" | "Resolvida";
+    status?: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente";
     agenteId?: string;
     setorId?: string;
     tagId?: string;

@@ -64,9 +64,7 @@ export function useConversations(): UseConversationsReturn {
             setMessages(prevMessages =>
                 page === 1
                     ? sortMessagesByTimestamp(uniqueMessages)
-                    : [...prevMessages, ...uniqueMessages].sort((a, b) =>
-                        new Date(a.date).getTime() - new Date(b.date).getTime()
-                    )
+                    : sortMessagesByTimestamp([...prevMessages, ...uniqueMessages])
             )
 
             if (page === 1 && isConnected) {

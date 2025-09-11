@@ -31,7 +31,7 @@ interface UseConversationListReturn {
     loadConversations: (params?: ConversationSearchParams, showLoading?: boolean) => Promise<void>
     loadMoreConversations: () => Promise<void>
     markAsRead: (conversationId: string) => void
-    filterByStatus: (status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => void
+    filterByStatus: (status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente" | null) => void
     searchConversations: (termoBusca: string) => void
     signalRConnected: boolean
     refreshConversations: () => Promise<void>
@@ -292,7 +292,7 @@ export function useConversationList(activeConversationId: string | null, onConve
         onError: handleSignalRError,
     })
 
-    const filterByStatus = useCallback((status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | null) => {
+    const filterByStatus = useCallback((status: "AguardandoNaFila" | "EmAtendimento" | "Resolvida" | "EmAutoAtendimento" | "AguardandoRespostaCliente" | null) => {
         const params: ConversationSearchParams = status === null
             ? {}
             : {status}

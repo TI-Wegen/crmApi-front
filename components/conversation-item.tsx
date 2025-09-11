@@ -1,10 +1,10 @@
 "use client";
 
-import {User, XCircle, CheckCircle} from "lucide-react";
-import {Badge} from "@/components/ui/badge";
-import {differenceInHours, formatDistanceToNowStrict, isBefore, parseISO,} from "date-fns";
-import {ptBR} from "date-fns/locale/pt-BR";
-import {Conversation} from "@/types/conversa";
+import { User, XCircle, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { differenceInHours, formatDistanceToNowStrict, isBefore, parseISO, } from "date-fns";
+import { ptBR } from "date-fns/locale/pt-BR";
+import { Conversation } from "@/types/conversa";
 
 interface ConversationItemProps {
     conversation: Conversation;
@@ -13,10 +13,58 @@ interface ConversationItemProps {
 }
 
 export default function ConversationItem({
-                                             conversation,
-                                             isSelected,
-                                             onClick,
-                                         }: ConversationItemProps) {
+    conversation,
+    isSelected,
+    onClick,
+}: ConversationItemProps) {
+    const getStatusColor = () => {
+        switch (conversation.status) {
+            case "Resolvida":
+                return "bg-green-500";
+            case "AguardandoRespostaCliente":
+                return "bg-purple-500";
+            case "EmAutoAtendimento":
+                return "bg-indigo-500";
+            case "AguardandoNaFila":
+                const lastMessageTime = new Date(conversation.timestamp);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now.getTime() - lastMessageTime.getTime()) / (1000 * 60));
+
+                if (diffInMinutes > 30) {
+                    return "bg-yellow-500";
+                }
+                return "bg-blue-500";
+            case "EmAtendimento":
+                return "bg-blue-500";
+            default:
+                return "bg-gray-400";
+        }
+    };
+
+    const getStatusText = () => {
+        switch (conversation.status) {
+            case "Resolvida":
+                return "Atendimento encerrado";
+            case "AguardandoRespostaCliente":
+                return "Aguardando resposta do cliente";
+            case "EmAutoAtendimento":
+                return "Em auto atendimento";
+            case "AguardandoNaFila":
+                const lastMessageTime = new Date(conversation.timestamp);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now.getTime() - lastMessageTime.getTime()) / (1000 * 60));
+
+                if (diffInMinutes > 30) {
+                    return "Esperando resposta do agente";
+                }
+                return "Aguardando na fila";
+            case "EmAtendimento":
+                return "Conversa em andamento";
+            default:
+                return "Status desconhecido";
+        }
+    };
+
     return (
         <div
             className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-50 active:bg-gray-100 ${
@@ -35,36 +83,15 @@ export default function ConversationItem({
                         />
                     ) : (
                         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="text-gray-500"/>
+                            <User className="text-gray-500" />
                         </div>
                     )}
 
-                    <div className="flex items-center gap-1 mt-1">
-                        {conversation.sessaoWhatsappAtiva ? (
-                            (() => {
-                                const expiraEm = conversation.sessaoWhatsappExpiraEm;
-                                const isExpired = expiraEm && isBefore(
-                                    typeof expiraEm === "string" ? parseISO(expiraEm) : expiraEm,
-                                    new Date()
-                                );
-
-                                return isExpired ? (
-                                    <div title="Atendimento finalizado" className="text-gray-400">
-                                        <CheckCircle size={18} />
-                                    </div>
-                                ) : (
-                                    <div title="Atendimento em andamento" className="text-green-500">
-                                        <User size={18} />
-                                    </div>
-                                );
-                            })()
-                        ) : (
-                            <div
-                                title={`Sessão desativada.`}
-                            >
-                                <XCircle size={18} className="text-gray-400"/>
-                            </div>
-                        )}
+                    <div className="absolute bottom-0 left-0 flex items-center">
+                        <div
+                            className={`w-4 h-4 rounded-full border-2 border-white ${getStatusColor()}`}
+                            title={getStatusText()}
+                        />
                     </div>
 
                     {conversation.unread > 0 && (
@@ -89,8 +116,8 @@ export default function ConversationItem({
                                 isSelected ? "text-blue-600" : "text-gray-500"
                             }`}
                         >
-              {conversation.timestamp}
-            </span>
+                            {conversation.timestamp}
+                        </span>
                     </div>
 
                     <div className="flex items-center justify-between mb-2">
@@ -126,7 +153,7 @@ export default function ConversationItem({
                                     isSelected ? "text-blue-600" : "text-gray-500"
                                 }`}
                             >
-                                <User className="h-3 w-3 mr-1"/>
+                                <User className="h-3 w-3 mr-1" />
                                 {conversation.agentName}
                             </span>
                         )}
