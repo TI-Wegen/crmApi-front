@@ -27,6 +27,14 @@ export default function ConversationList({
     const observer = useRef<IntersectionObserver | null>(null);
     const lastConversationRef = useRef<HTMLDivElement | null>(null);
 
+    const [totalConversations, setTotalConversations] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('totalConversations');
+            return saved ? parseInt(saved, 10) : 0;
+        }
+        return 0;
+    });
+
     const handleSearch = useCallback((value: string) => {
         setSearchTerm(value);
         onSearch(value);
@@ -45,6 +53,13 @@ export default function ConversationList({
         if (node) observer.current.observe(node);
         lastConversationRef.current = node;
     }, [loading, hasMore, onLoadMore]);
+
+        useEffect(() => {
+        if (conversations.length > 0) {
+            setTotalConversations(conversations.length);
+            localStorage.setItem('totalConversations', conversations.length.toString());
+        }
+    }, [conversations.length]);
 
     useEffect(() => {
         return () => {
@@ -99,6 +114,10 @@ export default function ConversationList({
                         )}
                     </>
                 )}
+            </div>
+
+            <div className="p-2 text-center text-xs text-gray-500 border-t border-gray-200">
+                Total de conversas: {totalConversations}
             </div>
         </div>
     );
