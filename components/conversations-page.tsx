@@ -72,11 +72,11 @@ const ConversationsPage = () => {
         selectConversation(conversationId);
     }, [markAsRead, selectConversation]);
 
-    const handleStartConversation = useCallback(async (conversationId: string): Promise<void> => {
+    const handleStartConversation = useCallback(async (conversationId: string, template: string): Promise<void> => {
         setShowNewConversation(false);
         const name = conversationDetails?.contatoNome || "";
         const id = conversationDetails?.id || "";
-        await startConversation(conversationId, "template", [name]).then(_ => selectConversation(id));
+        await startConversation(conversationId, template, [name]).then(_ => selectConversation(id));
     }, [conversationDetails, startConversation]);
 
     const handleStartConversationWithModal = useCallback(async (conversationId: string, template: string, params: string[]): Promise<void> => {

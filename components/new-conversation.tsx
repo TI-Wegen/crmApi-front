@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { useContacts } from "@/hooks/use-contacts";
 import { useTemplates } from "@/hooks/use-templates";
-import { TemplateDto } from "@/types/template";
 
 interface NewConversationProps {
   onConversationStarted: (contactId: string, templateName: string, bodyParameters: string[]) => void;
@@ -32,7 +31,7 @@ export default function NewConversation({
 }: NewConversationProps) {
   const { contacts, searchContacts } = useContacts();
   const { templates, loading: templatesLoading } = useTemplates();
-  const [step, setStep] = useState<"contact" | "template">("contact");
+  const [step, setStep] = useState<string>("contact");
   const [selectedContact, setSelectedContact] = useState<{ id: string; nome: string; telefone: string } | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,7 +87,6 @@ export default function NewConversation({
         </Button>
       </div>
 
-      {/* Modal de nova conversa */}
       <Dialog open={show} onOpenChange={handleClose}>
         <DialogContent className="max-w-md p-0">
           <DialogHeader className="p-4 border-b">

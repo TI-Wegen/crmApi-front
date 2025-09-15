@@ -12,7 +12,7 @@ import EmojiPicker, {EmojiClickData} from "emoji-picker-react"
 interface MessageInputProps {
     onSendMessage: (content: string, file?: File) => void
     sessaoAtiva: boolean
-    onConversationStarted?: (conversationId: string) => void
+    onConversationStarted?: (conversationId: string, template: string) => void
     conversationId: string
     contactName: string
 }
@@ -71,7 +71,7 @@ export default function MessageInput({
             setLoading(true)
             try {
                 if (onConversationStarted) {
-                    onConversationStarted(conversationId)
+                    onConversationStarted(conversationId, selectedTemplateId ?? "")
                 }
             } catch (err: unknown) {
                 console.error("Error starting conversation:", err)

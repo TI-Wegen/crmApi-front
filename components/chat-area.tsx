@@ -25,7 +25,7 @@ interface ChatAreaProps {
     onSendMessage: (content: string, file?: File) => void;
     loading?: boolean;
     onEndConversation: (atendimentoId: string) => Promise<void>;
-    onConversationStarted?: (conversationId: string) => void;
+    onConversationStarted?: (conversationId: string, template: string) => void;
     setores: SetorDto[];
     onLoadMoreMessages?: () => void;
     hasMoreMessages?: boolean;

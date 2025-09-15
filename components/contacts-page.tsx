@@ -33,10 +33,10 @@ const ContactsPage = () => {
         await loadConversationByContact(contactId, 1);
     }, [loadConversationByContact]);
 
-    const handleStartConversation = useCallback(async (contactId: string): Promise<void> => {
+    const handleStartConversation = useCallback(async (contactId: string, template: string): Promise<void> => {
         const name = conversationDetails?.contatoNome || "";
         const id = conversationDetails?.id || "";
-        await startConversation(contactId, "template", [name]).then(_ => selectConversation(id));
+        await startConversation(contactId, template, [name]).then(_ => selectConversation(id));
     }, [conversationDetails, startConversation]);
 
     const handleEndConversation = async (atendimentoId: string) => {
