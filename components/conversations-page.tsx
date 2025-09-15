@@ -220,6 +220,7 @@ const ConversationsPage = () => {
                                     activeFilter={conversationFilter}
                                     onFilterChange={handleFilterChange}
                                     tags={tags}
+                                    conversations={conversations}
                                 />
                                 <div className="flex-1 overflow-hidden">
                                     <ConversationList
