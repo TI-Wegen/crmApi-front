@@ -277,7 +277,7 @@ export default function ChatArea({
 
             <MessageInput
                 onSendMessage={handleSendMessage}
-                sessaoAtiva={true}
+                sessaoAtiva={conversation.sessaoWhatsappAtiva}
                 onConversationStarted={onConversationStarted}
                 conversationId={conversation.contatoId}
                 contactName={conversation.contatoNome}

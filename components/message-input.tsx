@@ -148,7 +148,6 @@ export default function MessageInput({
                                     <Smile className="h-4 w-4"/>
                                 </Button>
 
-                                {/* Emoji Picker */}
                                 {showEmojiPicker && (
                                     <div
                                         ref={emojiPickerRef}
