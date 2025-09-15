@@ -24,7 +24,6 @@ export default function ConversationFilters({
     tags = [],
     conversations,
 }: ConversationFiltersProps) {
-    // Calcular contagem de conversas por tag
     const getTagCount = (tagId: string) => {
         if (!tagId) return conversations.length;
         return conversations.filter(conv =>
@@ -32,7 +31,6 @@ export default function ConversationFilters({
         ).length
     }
 
-    // Contagem para "Todos"
     const totalCount = conversations.length
 
     const tagFilters = [
