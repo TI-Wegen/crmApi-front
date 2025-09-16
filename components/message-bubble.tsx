@@ -1,14 +1,16 @@
-import {Message} from "@/types/messagem";
+// Modificando o componente MessageBubble em /home/lucas/WebstormProjects/crmApi-front/components/message-bubble.tsx
+import { Message } from "@/types/messagem";
 import AudioPlayer from "@/components/ui/audio-player";
 
 interface MessageBubbleProps {
-  message: Message
+  message: Message;
 }
+
 export default function MessageBubble({ message }: MessageBubbleProps) {
-  const isImage = message.anexoUrl?.match(/\.(jpeg|jpg|png|gif|webp)$/i)
-  const isPDF = message.anexoUrl?.endsWith(".pdf")
-  const isAudio = message.anexoUrl?.match(/\.(mp3|ogg|wav)$/i)
-  const isVideo = message.anexoUrl?.match(/\.(mp4|webm|mov|ogg)$/i) && !isAudio // ogg pode ser vídeo ou áudio
+  const isImage = message.anexoUrl?.match(/\.(jpeg|jpg|png|gif|webp)$/i);
+  const isPDF = message.anexoUrl?.endsWith(".pdf");
+  const isAudio = message.anexoUrl?.match(/\.(mp3|ogg|wav)$/i);
+  const isVideo = message.anexoUrl?.match(/\.(mp4|webm|mov|ogg)$/i) && !isAudio;
 
   return (
     <div className={`flex ${message.isFromClient ? "justify-start" : "justify-end"}`}>
@@ -17,18 +19,16 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           message.isFromClient
             ? "bg-white text-gray-800 rounded-bl-sm"
             : "bg-blue-500 text-white rounded-br-sm"
-        } shadow-sm`}
+        } shadow-sm relative`}
       >
         {message.anexoUrl && (
           <div className="mb-2">
             {isImage ? (
-              <a href={message.anexoUrl} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={message.anexoUrl}
-                  alt="Imagem enviada"
-                  className="w-32 h-32 object-cover rounded-md border"
-                />
-              </a>
+              <img
+                src={message.anexoUrl}
+                alt="Imagem enviada"
+                className="w-full max-h-60 object-cover rounded-md border"
+              />
             ) : isPDF ? (
               <a
                 href={message.anexoUrl}
@@ -46,9 +46,9 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
                 Documento PDF
               </a>
             ) : isAudio ? (
-                <div className="flex justify-center mt-3">
-                    <AudioPlayer src={message.anexoUrl} />
-                </div>
+              <div className="flex justify-center mt-3">
+                <AudioPlayer src={message.anexoUrl} />
+              </div>
             ) : isVideo ? (
               <video controls className="w-full mt-1 rounded-md max-h-60">
                 <source src={message.anexoUrl} />
@@ -69,7 +69,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
 
         {message.content && <p className="text-sm">{message.content}</p>}
 
-           <div className="flex justify-between items-center mt-1">
+        <div className="flex justify-between items-center mt-1">
           <p
             className={`text-xs ${
               message.isFromClient ? "text-gray-500" : "text-blue-100"
@@ -82,7 +82,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             <div className="ml-2 flex items-center">
               <svg
                 className={`w-4 h-4 ${
-                  message.visualized? "text-blue-800" : "text-gray-200"
+                  message.visualized ? "text-blue-800" : "text-gray-200"
                 }`}
                 fill="currentColor"
                 viewBox="0 0 24 24"
@@ -94,7 +94,18 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           )}
         </div>
 
+        {message.reacaoMensagem && (
+          <div
+            className={`absolute bottom-0 transform translate-y-1/2 ${
+              message.isFromClient ? "left-2" : "right-2"
+            }`}
+          >
+            <div className="bg-white border border-gray-200 rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
+              <span className="text-xs">{message.reacaoMensagem}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }

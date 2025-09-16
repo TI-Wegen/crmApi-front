@@ -5,6 +5,7 @@ export interface MessageDto {
   remetenteTipo: "Cliente" | "Agente";
   agenteId?: string;
   timestamp: string;
+  reacaoMensagem?: string;
 }
 
 export interface MessageWithConversationIdDto extends MessageDto {
@@ -19,4 +20,5 @@ export interface Message {
   date: string;
   anexoUrl?: string;
   visualized?: boolean;
+  reacaoMensagem?: string;
 }

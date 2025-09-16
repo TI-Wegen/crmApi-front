@@ -1,13 +1,19 @@
 "use client"
 
-import React, {useEffect} from "react"
-import {useState, useRef} from "react"
-import {Loader2, Paperclip, Send, Smile} from "lucide-react"
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {useTemplates} from "@/hooks/use-templates"
-import {Template} from "@/types/template"
-import EmojiPicker, {EmojiClickData} from "emoji-picker-react"
+import React, { useEffect, useRef, useState } from "react"
+import { Loader2, Paperclip, Send, Smile } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { useTemplates } from "@/hooks/use-templates"
+import { Template } from "@/types/template"
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react"
 
 interface MessageInputProps {
     onSendMessage: (content: string, file?: File) => void
@@ -22,7 +28,7 @@ export default function MessageInput({
                                          sessaoAtiva,
                                          conversationId,
                                          onConversationStarted,
-                                         contactName
+                                         contactName,
                                      }: MessageInputProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [message, setMessage] = useState<string>("")
@@ -30,29 +36,29 @@ export default function MessageInput({
     const [loading, setLoading] = useState<boolean>(false)
     const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false)
 
-    const {templates, loading: loadingTemplates} = useTemplates()
+    const { templates, loading: loadingTemplates } = useTemplates()
     const emojiPickerRef = useRef<HTMLDivElement>(null)
 
     const handleEmojiClick = (emojiData: EmojiClickData) => {
-        setMessage(prevMessage => prevMessage + emojiData.emoji);
-    };
+        setMessage((prevMessage) => prevMessage + emojiData.emoji)
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
         if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-            setShowEmojiPicker(false);
+            setShowEmojiPicker(false)
         }
-    };
+    }
 
     useEffect(() => {
         if (showEmojiPicker) {
-            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener("mousedown", handleClickOutside)
         } else {
-            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside)
         }
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showEmojiPicker]);
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [showEmojiPicker])
 
     const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault()
@@ -98,7 +104,7 @@ export default function MessageInput({
             <form onSubmit={handleSubmit} className="flex flex-col gap-2">
                 {selectedFile && (
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <Paperclip className="h-4 w-4"/>
+                        <Paperclip className="h-4 w-4" />
                         <span>{selectedFile.name}</span>
                         <button
                             type="button"
@@ -127,7 +133,7 @@ export default function MessageInput({
                                 className="text-gray-500 hover:text-gray-700"
                                 onClick={(): void => document.getElementById("file-input")?.click()}
                             >
-                                <Paperclip className="h-5 w-5"/>
+                                <Paperclip className="h-5 w-5" />
                             </Button>
 
                             <div className="flex-1 relative">
@@ -145,56 +151,46 @@ export default function MessageInput({
                                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 >
-                                    <Smile className="h-4 w-4"/>
+                                    <Smile className="h-4 w-4" />
                                 </Button>
 
                                 {showEmojiPicker && (
                                     <div
                                         ref={emojiPickerRef}
                                         className="absolute bottom-full right-0 mb-2 z-10"
-                                        style={{ transform: 'translateY(-10px)' }}
+                                        style={{ transform: "translateY(-10px)" }}
                                     >
-                                        <EmojiPicker
-                                            onEmojiClick={handleEmojiClick}
-                                            width={300}
-                                            height={400}
-                                        />
+                                        <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={400} />
                                     </div>
                                 )}
                             </div>
                         </>
                     ) : (
-                        <select
+                        <Select
                             value={selectedTemplateId}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void => setSelectedTemplateId(e.target.value)}
-                            className="flex-1 border rounded px-3 py-2 text-sm text-gray-700"
+                            onValueChange={(value: string) => setSelectedTemplateId(value)}
                             disabled={loading || loadingTemplates}
                         >
-                            <option value="">Select a message template...</option>
-                            {templates.map((template: Template) => (
-                                <option key={template.id} value={template.name}>
-                                    {template.body}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="pr-10 rounded-full border-gray-300 focus:border-blue-500">
+                                <SelectValue placeholder="Selecione um template..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {templates.map((template: Template) => (
+                                    <SelectItem key={template.id} value={template.name}>
+                                        {template.body}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     )}
 
                     <Button
                         type="submit"
                         size="sm"
                         className="rounded-full bg-blue-500 hover:bg-blue-600"
-                        disabled={
-                            loading ||
-                            (sessaoAtiva
-                                ? !message.trim()
-                                : !selectedTemplateId)
-                        }
+                        disabled={loading || (sessaoAtiva ? !message.trim() : !selectedTemplateId)}
                     >
-                        {loading ? (
-                            <Loader2 className="animate-spin h-4 w-4"/>
-                        ) : (
-                            <Send className="h-4 w-4"/>
-                        )}
+                        {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
                     </Button>
                 </div>
             </form>

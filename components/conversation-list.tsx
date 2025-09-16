@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Conversation } from "@/types/conversa";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {Search} from "lucide-react";
+import {Input} from "@/components/ui/input";
+import {Conversation} from "@/types/conversa";
 import ConversationItem from "@/components/conversation-item";
 
 interface ConversationListProps {
@@ -15,14 +15,14 @@ interface ConversationListProps {
 }
 
 export default function ConversationList({
-    conversations,
-    selectedId,
-    onSearch,
-    loading,
-    onSelectConversation,
-    hasMore,
-    onLoadMore
-}: ConversationListProps) {
+                                             conversations,
+                                             selectedId,
+                                             onSearch,
+                                             loading,
+                                             onSelectConversation,
+                                             hasMore,
+                                             onLoadMore
+                                         }: ConversationListProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const observer = useRef<IntersectionObserver | null>(null);
     const lastConversationRef = useRef<HTMLDivElement | null>(null);
@@ -54,7 +54,7 @@ export default function ConversationList({
         lastConversationRef.current = node;
     }, [loading, hasMore, onLoadMore]);
 
-        useEffect(() => {
+    useEffect(() => {
         if (conversations.length > 0) {
             setTotalConversations(conversations.length);
             localStorage.setItem('totalConversations', conversations.length.toString());
@@ -71,7 +71,7 @@ export default function ConversationList({
         <div className="flex flex-col h-full">
             <div className="p-3 border-b border-gray-200">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"/>
                     <Input
                         placeholder="Buscar conversas..."
                         value={searchTerm}

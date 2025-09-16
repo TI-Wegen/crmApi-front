@@ -2,6 +2,7 @@ import {formatMessageTimestamp} from "@/utils/date-formatter";
 import {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem";
 
 
+// message-mapper.ts
 export const messageMapper = {
     fromDto(dto: MessageDto): Message {
         const date = new Date(dto.timestamp)
@@ -23,9 +24,9 @@ export const messageMapper = {
             isFromClient: dto.remetenteTipo === "Cliente",
             date: date.toString(),
             anexoUrl: dto.anexoUrl,
+            reacaoMensagem: dto.reacaoMensagem,
         }
     },
-
 
     fromSignalR(dto: MessageWithConversationIdDto): Message {
         return {
@@ -35,6 +36,7 @@ export const messageMapper = {
             isFromClient: dto.remetenteTipo === "Cliente",
             date: new Date(dto.timestamp).toISOString(),
             anexoUrl: dto.anexoUrl,
+            reacaoMensagem: dto.reacaoMensagem,
         }
     }
 }
