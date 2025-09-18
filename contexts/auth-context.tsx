@@ -6,7 +6,6 @@ import {useAuth, type UseAuthReturn} from "@/hooks/use-auth"
 import AppSidebar from "@/components/app-sidebar";
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
 import {usePathname} from "next/navigation";
-import UserHeader from "@/components/user-header";
 
 interface AuthContextType extends UseAuthReturn {
 }

@@ -8,3 +8,11 @@ export interface DashboardStats {
     totalEmAtendimento: number;
     totalResolvidas: number;
 }
+
+export interface DashboardPersonal {
+    conversasResolvidas: number;
+    conversasAtivas: number;
+    mediaAvaliacao: number;
+    conversasPendentes: number;
+    conversasEmAndamento: number;
+}
