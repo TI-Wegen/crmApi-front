@@ -1,20 +1,14 @@
 "use client"
 
-import {ChevronLeft, ChevronRight, LogOut, MessageCircle, Tag, User, Users} from "lucide-react"
-import type React from "react";
-import {useState} from "react";
+import {ChartArea, ChevronLeft, ChevronRight, LogOut, MessageCircle, Tag, User, Users} from "lucide-react"
+import React, {useState} from "react";
 import {useSignalRConnectionStatus} from "@/hooks/use-signalR-connection-status";
 import UserHeader from "@/components/user-header";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {Button} from "@/components/ui/button";
 import {useAuth} from "@/hooks/use-auth";
 import {usePathname, useRouter} from 'next/navigation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip";
 
 interface MenuItem {
     name: string
@@ -38,19 +32,24 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
 
     const topMenuItems: MenuItem[] = [
         {
+            name: "Dashboard",
+            href: "/dashboard",
+            icon: <ChartArea className="h-4 w-4"/>
+        },
+        {
             name: "Conversas",
             href: "/chat/conversations",
-            icon: <MessageCircle className="h-4 w-4 mr-2"/>
+            icon: <MessageCircle className="h-4 w-4"/>
         },
         {
             name: "Contatos",
             href: "/chat/contacts",
-            icon: <Users className="h-4 w-4 mr-2"/>,
+            icon: <Users className="h-4 w-4"/>,
         },
         {
             name: "Tags",
             href: "/tags",
-            icon: <Tag className="h-4 w-4 mr-2"/>,
+            icon: <Tag className="h-4 w-4"/>,
         },
     ]
 
@@ -61,7 +60,7 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
         if (href === "/chat/contacts") {
             return pathname === "/chat/contacts";
         }
-        return false;
+        return pathname === href;
     };
 
     const handleLogout = (): void => {
@@ -69,6 +68,10 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
             logout()
             router.push("/login")
         }
+    }
+
+    const handleNavigateProfile = () => {
+        router.push("/profile")
     }
 
     if (isLoginPage) {
@@ -79,7 +82,7 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
         return (
             <>
                 <UserHeader signalRConnected={!!isSignalRConnected}/>
-                <div className="sm:ml-64 h-[calc(100vh-4rem)] overflow-hidden">
+                <div className="h-[calc(100vh-4rem)] overflow-hidden">
                     {children}
                 </div>
             </>
@@ -89,13 +92,20 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
     return (
         <>
             <UserHeader signalRConnected={!!isSignalRConnected}/>
-            <aside
-                id="separator-sidebar"
-                className={`fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out ${
+
+            {/* Sidebar Container */}
+            <div
+                className={`fixed top-16 left-0 h-[calc(100vh-4rem)] z-40 transition-all duration-300 ease-in-out bg-gray-50 ${
                     isExpanded ? "w-64" : "w-20"
                 }`}
-                aria-label="Sidebar">
-                <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50 flex flex-col">
+            >
+
+                <aside
+                    id="separator-sidebar"
+                    className="h-full px-3 py-4 overflow-y-auto flex flex-col"
+                    aria-label="Sidebar"
+                >
+
                     <ul className="space-y-2 font-medium flex-grow">
                         {topMenuItems.map((item, index) => (
                             <li key={index}>
@@ -112,28 +122,28 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                                                 onClick={(e) => {
                                                     e.preventDefault()
                                                     router.push(item.href)
-                                                }}>
-              <span className={isActive(item.href) ? "text-white" : ""}>
-                {item.icon}
-              </span>
+                                                }}
+                                            >
+                                                <span className={isActive(item.href) ? "text-white" : ""}>
+                                                    {item.icon}
+                                                </span>
                                                 {isExpanded && (
-                                                    <>
-                                                        <span className="ms-3">{item.name}</span>
-                                                        {item.badge && (
-                                                            <span
-                                                                className={`inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full ${
-                                                                    item.badge.type === "primary"
-                                                                        ? isActive(item.href)
-                                                                            ? "text-blue-100 bg-blue-800"
-                                                                            : "text-blue-800 bg-blue-100"
-                                                                        : isActive(item.href)
-                                                                            ? "text-gray-100 bg-gray-800"
-                                                                            : "text-gray-800 bg-gray-100"
-                                                                }`}>
-                      {item.badge.text}
-                    </span>
-                                                        )}
-                                                    </>
+                                                    <span className="ms-3">{item.name}</span>
+                                                )}
+                                                {item.badge && isExpanded && (
+                                                    <span
+                                                        className={`inline-flex items-center justify-center px-2 ms-3 text-sm font-medium rounded-full ${
+                                                            item.badge.type === "primary"
+                                                                ? isActive(item.href)
+                                                                    ? "text-blue-100 bg-blue-800"
+                                                                    : "text-blue-800 bg-blue-100"
+                                                                : isActive(item.href)
+                                                                    ? "text-gray-100 bg-gray-800"
+                                                                    : "text-gray-800 bg-gray-100"
+                                                        }`}
+                                                    >
+                                                        {item.badge.text}
+                                                    </span>
                                                 )}
                                             </a>
                                         </TooltipTrigger>
@@ -154,7 +164,7 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setIsExpanded(!isExpanded)}
-                                className={`w-full flex items-center justify-start p-2 ${
+                                className={`w-full flex items-center p-2 ${
                                     isExpanded ? "" : "justify-center"
                                 }`}
                             >
@@ -174,7 +184,7 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
-                                        className={`w-full flex items-center space-x-2 ${
+                                        className={`w-full flex items-center space-x-2 p-2 ${
                                             isExpanded ? "" : "justify-center"
                                         }`}
                                     >
@@ -183,15 +193,19 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                                             <User className="h-4 w-4 text-gray-600"/>
                                         </div>
                                         {isExpanded && (
-                                            <div className="text-left">
-                                                <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                                                <p className="text-xs text-gray-500">{user.email}</p>
+                                            <div className="text-left overflow-hidden">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+                                                <p className="text-xs text-gray-500 truncate">{user.email}</p>
                                             </div>
                                         )}
                                     </Button>
                                 </DropdownMenuTrigger>
 
                                 <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuItem onClick={handleNavigateProfile}>
+                                        <User className="h-4 w-4 mr-2"/>
+                                        Meu perfil
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                                         <LogOut className="h-4 w-4 mr-2"/>
                                         Sair
@@ -200,12 +214,18 @@ export default function AppSidebar({children}: { children: React.ReactNode }) {
                             </DropdownMenu>
                         </li>
                     </ul>
-                </div>
-            </aside>
+                </aside>
+            </div>
 
-            <div className={isExpanded ? "sm:ml-64" : "sm:ml-20"}
-                 style={{height: "calc(100vh - 4rem)", overflow: "hidden"}}>
-                {children}
+            <div
+                className={`transition-all duration-300 ease-in-out ${isExpanded ? "sm:ml-64" : "sm:ml-20"}`}
+                style={{
+                    height: "calc(100vh - 4rem)",
+                }}
+            >
+                <div className="h-full overflow-auto">
+                    {children}
+                </div>
             </div>
         </>
     )

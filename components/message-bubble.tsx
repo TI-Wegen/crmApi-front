@@ -1,4 +1,3 @@
-// Modificando o componente MessageBubble em /home/lucas/WebstormProjects/crmApi-front/components/message-bubble.tsx
 import { Message } from "@/types/messagem";
 import AudioPlayer from "@/components/ui/audio-player";
 
