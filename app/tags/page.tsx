@@ -14,7 +14,18 @@ import {ptBR} from 'date-fns/locale';
 import {getContrastColor} from "@/utils/contrast-color";
 
 export default function TagsPage() {
-    const {tags, loading, error, createTag, updateTag, deleteTag, refreshTags} = useTags();
+    const {
+        tags,
+        loading,
+        error,
+        createTag,
+        updateTag,
+        deleteTag,
+        refreshTags,
+        hasValidationError,
+        hasAuthError,
+        hasServerError
+    } = useTags();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTag, setEditingTag] = useState<Tag | null>(null);
 
@@ -107,7 +118,10 @@ export default function TagsPage() {
                         <CardTitle className="text-red-500">Erro</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-red-500">{error}</p>
+                        <p className="text-red-500">{hasValidationError ? 'Erro de Validação' :
+                            hasAuthError ? 'Erro de Autorização' :
+                                hasServerError ? 'Erro do Servidor' :
+                                    'Erro'}</p>
                         <Button onClick={refreshTags} className="mt-2">Tentar novamente</Button>
                     </CardContent>
                 </Card>
