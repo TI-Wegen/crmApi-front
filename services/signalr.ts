@@ -113,7 +113,6 @@ export class SignalRService {
             .configureLogging(signalR.LogLevel.Information)
             .build();
 
-        // Register event handlers
         this.connection.on(
             "ReceiveNewConversation",
             (data: ConversationSummaryDto) =>
@@ -135,7 +134,6 @@ export class SignalRService {
             }
         );
 
-        // Connection lifecycle events
         this.connection.onreconnected((connectionId) =>
             console.log("SignalR reconnected:", connectionId)
         );

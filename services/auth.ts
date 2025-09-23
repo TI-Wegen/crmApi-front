@@ -56,7 +56,6 @@ export class AuthService {
 
     static decodeToken(token: string): User | null {
         try {
-            // 验证token格式
             const parts = token.split(".");
             if (parts.length !== 3) {
                 console.error("❌ Token format is invalid");
@@ -91,7 +90,6 @@ export class AuthService {
         if (!token) return false
 
         try {
-            // 验证token格式
             const parts = token.split(".");
             if (parts.length !== 3) {
                 console.error("❌ Token format is invalid");

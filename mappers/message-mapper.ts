@@ -2,7 +2,6 @@ import {formatMessageTimestamp} from "@/utils/date-formatter";
 import {Message, MessageDto, MessageWithConversationIdDto} from "@/types/messagem";
 
 
-// message-mapper.ts
 export const messageMapper = {
     fromDto(dto: MessageDto): Message {
         const date = new Date(dto.timestamp)
