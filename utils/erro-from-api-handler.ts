@@ -15,7 +15,6 @@ export const createErrorFromApiError = (err: any, defaultMessage: string): UseTa
         if (ApiService.isValidationError(err)) type = 'validation';
         else if (ApiService.isAuthError(err)) type = 'auth';
         else if (ApiService.isServerError(err)) type = 'server';
-        else if (err.statusCode === 0) type = 'network';
 
         return {
             message: err.message,
